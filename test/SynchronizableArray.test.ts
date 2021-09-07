@@ -3,6 +3,7 @@ import ParentNotSetError from "../src/exceptions/ParentNotSetError";
 import UpdateNewerItemError from "../src/exceptions/UpdateNewerItemError";
 import PersonItem from "../src/PersonItem";
 import DocId from "../src/types/DocId";
+import { SyncOperation } from "../src/types/SyncTypes";
 import { SyncConflictStrategy } from "../src/types/SyncTypes";
 
 function makeItem(id: DocId, date: string): PersonItem{
@@ -27,11 +28,11 @@ const initializeMock = () => {
   slaveSyncArray.lastPostAt = new Date("2001/02/01");
 
   syncArrayManyItems = new SynchronizableArray([
-    new PersonItem(1, { name: "a", age: 15 }, new Date("2020/01/01")),
-    new PersonItem(2, { name: "b", age: 16 }, new Date("2015/06/01")),
-    new PersonItem(3, { name: "c", age: 17 }, new Date("2018/06/01")),
-    new PersonItem(4, { name: "d", age: 18 }, new Date("2016/06/01")),
-    new PersonItem(5, { name: "e", age: 19 }, new Date("2021/06/01"))
+    makeItem(1, "2020/01/01"),
+    makeItem(2, "2015/06/01"),
+    makeItem(3, "2018/06/01"),
+    makeItem(4, "2016/06/01"),
+    makeItem(5, "2021/06/01")
   ]);
 };
 
@@ -43,29 +44,31 @@ describe("SynchronizableArray", () => {
     expect(masterSyncArray.array).toHaveLength(2);
   });
   
-  test(".needsFetchFromParent", () => {
-    expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
-    expect(masterSyncArray.needsFetchFromParent()).toBeFalsy();
+  test(".needsFetch", async () => {
+    expect(await slaveSyncArray.needsSync(SyncOperation.Fetch)).toBeTruthy();
+    expect(await masterSyncArray.needsSync(SyncOperation.Fetch)).toBeFalsy();
   });
   
-  test(".itemsToFetchFromParent", () => {
-    expect(slaveSyncArray.itemsToFetchFromParent()).toHaveLength(1);
-    expect(() => { masterSyncArray.itemsToFetchFromParent() }).toThrow(ParentNotSetError);
+  test(".itemsToFetchFromParent", async () => {
+    expect(await slaveSyncArray.itemsToFetchFromParent()).toHaveLength(1);
+    await expect(async () => { await masterSyncArray.itemsToFetchFromParent() })
+    .rejects
+    .toThrow(ParentNotSetError);
   });
 
-  test(".updateFromParent", () => {
-    slaveSyncArray.updateFromParent();
+  test(".fetch", async () => {
+    await slaveSyncArray.fetch();
     expect(slaveSyncArray.array[0]).toBe(personItems[1]);
-    expect(slaveSyncArray.needsFetchFromParent()).toBeFalsy();
+    expect(await slaveSyncArray.needsSync(SyncOperation.Fetch)).toBeFalsy();
   });
 
-  test(".updateFromParent with conflict", () => {
+  test(".fetch with conflict", async () => {
     slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
-    expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
+    expect(slaveSyncArray.needsSync(SyncOperation.Fetch)).toBeTruthy();
 
     let err: any;
     try{
-      slaveSyncArray.updateFromParent();
+      await slaveSyncArray.fetch();
     } catch (e){
       err = e;
     }
@@ -74,85 +77,87 @@ describe("SynchronizableArray", () => {
     expect(err.id).toEqual("marisel34");
   });
 
-  test(".updateFromParent with conflict (use parent data)", () => {
+  test(".fetch with conflict (use parent data)", async () => {
     slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
-    expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
-    slaveSyncArray.updateFromParent({ conflictStrategy: SyncConflictStrategy.Force });
+    expect(await slaveSyncArray.needsSync(SyncOperation.Fetch)).toBeTruthy();
+    await slaveSyncArray.fetch({ conflictStrategy: SyncConflictStrategy.Force });
 
     // Uses parent data.
     expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2020/06/01"));
   });
 
-  test(".updateFromParent with conflict (use ignore strategy)", () => {
+  test(".fetch with conflict (use ignore strategy)", async () => {
     slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
-    expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
-    slaveSyncArray.updateFromParent({ conflictStrategy: SyncConflictStrategy.Ignore });
+    expect(await slaveSyncArray.needsSync(SyncOperation.Fetch)).toBeTruthy();
+    await slaveSyncArray.fetch({ conflictStrategy: SyncConflictStrategy.Ignore });
     expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2028/06/01"));
   });
 
-  test(".needsToUpdateParent", () => {
-    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
-    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
+  test(".needsToUpdateParent", async () => {
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeFalsy();
+    slaveSyncArray.upsert(makeItem(123, "2026/01/01"));
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeTruthy();
   });
 
-  test(".updateParent", () => {
+  test(".updateParent", async () => {
     expect(slaveSyncArray.array).toHaveLength(0);
     expect(masterSyncArray.array).toHaveLength(2);
-    slaveSyncArray.upsert(new PersonItem(1231, { name: "x", age: 50 }, new Date("2026/01/01")));
-    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
-    slaveSyncArray.updateParent();
-    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+    slaveSyncArray.upsert(makeItem(1231, "2026/01/01"));
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeTruthy();
+    await slaveSyncArray.post();
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeFalsy();
 
-    slaveSyncArray.upsert(new PersonItem(1232, { name: "x", age: 50 }, new Date("2027/01/01")));
-    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
-    slaveSyncArray.updateParent();
-    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+    slaveSyncArray.upsert(makeItem(1232, "2027/01/01"));
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeTruthy();
+    await slaveSyncArray.post();
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeFalsy();
     expect(slaveSyncArray.array).toHaveLength(2);
     expect(masterSyncArray.array).toHaveLength(4);
   });
 
-  test(".updateParent corrupted updatedAt does not get posted", () => {
+  test(".post corrupted updatedAt does not get posted", async () => {
     expect(slaveSyncArray.array).toHaveLength(0);
     expect(masterSyncArray.array).toHaveLength(2);
-    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("1995/01/01")));
-    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
-    slaveSyncArray.updateParent();
+    slaveSyncArray.upsert(makeItem(123, "1995/01/01"));
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeFalsy();
+    await slaveSyncArray.post();
     expect(slaveSyncArray.array).toHaveLength(1);
     expect(masterSyncArray.array).toHaveLength(2);
   });
 
-  test(".updateParent with conflict", () => {
-    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
-    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
-    expect(() => { slaveSyncArray.updateParent() }).toThrowError(UpdateNewerItemError);
+  test(".post with conflict", async () => {
+    slaveSyncArray.upsert(makeItem(123, "2025/01/01"));
+    masterSyncArray.upsert(makeItem(123, "2026/01/01"));
+    expect(await slaveSyncArray.needsSync(SyncOperation.Post)).toBeTruthy();
+
+    await expect(async () => { await slaveSyncArray.post() })
+    .rejects
+    .toThrow(UpdateNewerItemError);
   });
 
-  test(".updateParent with conflict (use slave data)", () => {
-    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
-    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    slaveSyncArray.updateParent({ conflictStrategy: SyncConflictStrategy.Force });
+  test(".post with conflict (use slave data)", async () => {
+    slaveSyncArray.upsert(makeItem(123, "2025/01/01"));
+    masterSyncArray.upsert(makeItem(123, "2026/01/01"));
+    await slaveSyncArray.post({ conflictStrategy: SyncConflictStrategy.Force });
 
     // A little bit verbose.
     expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
     expect((masterSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
   });
 
-  test(".updateParent with conflict (use ignore strategy)", () => {
-    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
-    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    slaveSyncArray.updateParent({ conflictStrategy: SyncConflictStrategy.Ignore });
+  test(".post with conflict (use ignore strategy)", async () => {
+    slaveSyncArray.upsert(makeItem(123, "2025/01/01"));
+    masterSyncArray.upsert(makeItem(123, "2026/01/01"));
+    await slaveSyncArray.post({ conflictStrategy: SyncConflictStrategy.Ignore });
 
     // A little bit verbose.
     expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
     expect((masterSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2026/01/01"));
   });
 
-  test(".itemsNewerThan (result sorted by date ASC)", () => {
-    const itemIds = syncArrayManyItems.itemsNewerThan(new Date("2015/06/02"))
-                                      .map(i => i.id);
+  test(".itemsNewerThan (result sorted by date ASC)", async () => {
+    const itemIds = await syncArrayManyItems.itemsNewerThan(new Date("2015/06/02"));
 
-    expect(itemIds).toEqual([4, 3, 1, 5]);
+    expect(itemIds.map(i => i.id)).toEqual([4, 3, 1, 5]);
   });
 });

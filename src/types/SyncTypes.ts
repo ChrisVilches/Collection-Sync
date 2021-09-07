@@ -16,3 +16,8 @@ export enum SyncConflictStrategy {
 export interface SyncOptions{
   conflictStrategy: SyncConflictStrategy;
 }
+
+export enum SyncOperation{
+  Fetch,
+  Post
+}

@@ -4,7 +4,6 @@ abstract class CollectionItem {
   private _id: DocId;
   private _updatedAt: Date;
   private _document: object; // TODO: Should be parameterized somehow (i.e. use a T type instead of object).
-  private _deleted: boolean;
 
   get id(): DocId{
     return this._id;
@@ -18,21 +17,15 @@ abstract class CollectionItem {
     return this._document;
   }
 
-  get deleted(): boolean{
-    return this._deleted;
-  }
-
-  constructor(id: DocId, d: object, updatedAt: Date, deleted: boolean = false){
+  constructor(id: DocId, d: object, updatedAt: Date){
     this._id = id;
     this._document = d;
     this._updatedAt = updatedAt;
-    this._deleted = deleted;
   }
 
-  update(d: object, updatedAt: Date, deleted: boolean){
+  update(d: object, updatedAt: Date){
     this._document = d;
     this._updatedAt = updatedAt;
-    this._deleted = deleted;
   }
 }
 

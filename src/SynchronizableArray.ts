@@ -1,7 +1,6 @@
 import CollectionItem from "./CollectionItem";
 import SynchronizableCollection from "./SynchronizableCollection";
-import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
-import { SyncOptions, SyncConflictStrategy } from "./types/SyncTypes";
+import { SyncOperation, SyncOptions } from "./types/SyncTypes";
 import DocId from "./types/DocId";
 import { List } from "immutable";
 
@@ -28,7 +27,7 @@ class SynchronizableArray extends SynchronizableCollection{
   upsert(item: CollectionItem){
     const found: CollectionItem | undefined = this.findById(item.id);
     if(found){
-      found.update(item.document, item.updatedAt, item.deleted);
+      found.update(item.document, item.updatedAt);
       return found;
     } else {
       this.array.push(item);
@@ -36,66 +35,14 @@ class SynchronizableArray extends SynchronizableCollection{
     }
   }
 
-  // TODO: Some of this code/logic should be in the base class.
-  updateFromParent(options: SyncOptions = this.defaultSyncOptions){
-    if(!this.needsFetchFromParent()) return;
+  latestUpdatedItem(): CollectionItem | undefined{
+    if(this.array.length == 0) return undefined;
 
-    const items: CollectionItem[] = this.itemsToFetchFromParent();
-
-    for(let i=0; i<items.length; i++){
-      const item = items[i];
-      const id = item.id;
-
-      const found: CollectionItem | undefined = this.findById(id);
-
-      if(found && found.updatedAt > item.updatedAt){
-        if(options.conflictStrategy == SyncConflictStrategy.RaiseError){
-          throw new UpdateNewerItemError(item.id);
-        } else if(options.conflictStrategy == SyncConflictStrategy.Force) {
-          this.upsert(item);
-        }
-      } else {
-        this.upsert(item);
-      }
-
-      this.lastFetchAt = item.updatedAt;
-    }
-  }
-
-  updateParent(options: SyncOptions = this.defaultSyncOptions){
-    if(!this.needsToUpdateParent()) return;
-
-    const items: CollectionItem[] = this.itemsToUpdateParent();
-    const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
-
-    for(let i=0; i<items.length; i++){
-      const item = items[i];
-      const id = item.id;
-
-      const found: CollectionItem | undefined = (this.parent as SynchronizableArray).findById(id);
-
-      if(found && found.updatedAt > item.updatedAt){
-        if(options.conflictStrategy == SyncConflictStrategy.RaiseError){
-          throw new UpdateNewerItemError(item.id);
-        } else if(options.conflictStrategy == SyncConflictStrategy.Force){
-          parent.upsert(item);
-        }
-      } else {
-        parent.upsert(item);
-      }
-
-      this.lastPostAt = item.updatedAt;
-    }
-  }
-
-  latestUpdateAt(): Date | null{
-    if(this.array.length == 0) return null;
-
-    let latest = this.array[0].updatedAt;
+    let latest = this.array[0];
 
     for(let i=0; i<this.array.length; i++){
-      let curr = this.array[i].updatedAt;
-      if(latest < curr){
+      let curr = this.array[i];
+      if(latest.updatedAt < curr.updatedAt){
         latest = curr;
       }
     }
