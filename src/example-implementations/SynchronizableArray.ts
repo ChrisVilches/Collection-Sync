@@ -1,15 +1,19 @@
-import CollectionItem from "./CollectionItem";
-import SynchronizableCollection from "./SynchronizableCollection";
+import CollectionItem from "../CollectionItem";
+import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
-import DocId from "./types/DocId";
+import DocId from "../types/DocId";
 import { List } from "immutable";
 
 class SynchronizableArray extends SynchronizableCollection{
-  array: CollectionItem[];
+  private array: CollectionItem[];
 
   constructor(array: CollectionItem[], syncMetadata = new BasicSyncMetadata()){
     super(syncMetadata);
     this.array = List(array).toArray(); // It seems R.clone doesn't work for cloning (several tests fail).
+  }
+
+  countAll(): number{
+    return this.array.length;
   }
 
   itemsNewerThan(date: Date | undefined): CollectionItem[]{

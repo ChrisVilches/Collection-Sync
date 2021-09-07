@@ -2,6 +2,8 @@ import CollectionItem from "./CollectionItem";
 import DocId from "./types/DocId";
 
 abstract class Collection{
+  abstract countAll(): Promise<number> | number;
+
   // TODO: This should be optimized to be batch-first (and also the syncing algorithms).
   abstract findById(id: DocId): Promise<CollectionItem> | CollectionItem | undefined;
 

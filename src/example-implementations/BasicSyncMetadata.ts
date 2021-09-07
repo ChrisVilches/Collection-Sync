@@ -1,5 +1,4 @@
-import CollectionSyncMetadata from "./CollectionSyncMetadata";
-import { SyncOperation } from "./types/SyncTypes";
+import CollectionSyncMetadata from "../CollectionSyncMetadata";
 
 /** A simple sync metadata manager. */
 class BasicSyncMetadata extends CollectionSyncMetadata{

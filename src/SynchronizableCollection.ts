@@ -5,6 +5,8 @@ import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
 import Collection from "./Collection";
 import CollectionSyncMetadata from "./CollectionSyncMetadata";
 
+// TODO: Many methods in this class could be private.
+
 abstract class SynchronizableCollection extends Collection {
   protected readonly defaultSyncOptions: SyncOptions = {
     conflictStrategy: SyncConflictStrategy.RaiseError
@@ -15,7 +17,7 @@ abstract class SynchronizableCollection extends Collection {
   /** Used to keep state of sync process. */
   private lastSyncedItem?: CollectionItem;
 
-  protected syncMetadata: CollectionSyncMetadata;
+  public syncMetadata: CollectionSyncMetadata;
 
   constructor(syncMetadata: CollectionSyncMetadata){
     super();
@@ -52,34 +54,32 @@ abstract class SynchronizableCollection extends Collection {
   //       (So that the items prior to the conflict are not synced again).
   //
   //       Code that checks this should be in the non-extendable part (not user defined classes).
-  async itemsToFetch(): Promise<CollectionItem[]>{
-    if(this._parent == undefined){
-      throw new ParentNotSetError("Cannot fetch from parent");
-    }
-
-    if(!await this.needsSync(SyncOperation.Fetch)){
-      return [];
-    }
-
+  private async itemsToFetch(): Promise<CollectionItem[]>{
     const lastFetchAt = await this.syncMetadata.getLastAt(SyncOperation.Fetch);
-
     return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt);
   }
 
-  async itemsToPost(): Promise<CollectionItem[]>{
-    if(this._parent == undefined){
-      throw new ParentNotSetError("Cannot post to parent");
-    }
-
-    if(!await this.needsSync(SyncOperation.Post)){
-      return [];
-    }
-
-    const lastPostAt = await this.syncMetadata.getLastPostAt();
+  private async itemsToPost(): Promise<CollectionItem[]>{
+    const lastPostAt = await this.syncMetadata.getLastAt(SyncOperation.Post);
     return await this.itemsNewerThan(lastPostAt);
   }
 
+  // TODO: Should be private?
+  // TODO: Note that this comment will be invisible for users implementing this class.
+  //       Users need to pay attention to this warning when implementing a Collection.
+  /** Returns a list of items to sync. The list MUST be ordered by updatedAt ASC.
+   * Failing to provide an `order by updatedAt ASC` list will corrupt in case
+   * of conflict error (if it's ordered, a conflict would safely abort the sync process).
+  */
   async itemsToSync(syncOperation: SyncOperation): Promise<CollectionItem[]>{
+    if(this._parent == undefined){
+      throw new ParentNotSetError("Cannot sync to parent");
+    }
+
+    if(!await this.needsSync(syncOperation)){
+      return [];
+    }
+
     switch(syncOperation){
       case SyncOperation.Fetch:
         return this.itemsToFetch();

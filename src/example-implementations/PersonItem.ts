@@ -1,5 +1,5 @@
-import CollectionItem from "./CollectionItem";
-import DocId from "./types/DocId";
+import CollectionItem from "../CollectionItem";
+import DocId from "../types/DocId";
 
 interface Person{
   name: string;
