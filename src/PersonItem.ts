@@ -1,4 +1,5 @@
 import CollectionItem from "./CollectionItem";
+import DocId from "./types/DocId";
 
 interface Person{
   name: string;
@@ -6,7 +7,7 @@ interface Person{
 }
 
 class PersonItem extends CollectionItem {
-  constructor(id: string | number, person: Person, updatedAt: Date){
+  constructor(id: DocId, person: Person, updatedAt: Date){
     super(id, person, updatedAt);
   }
 

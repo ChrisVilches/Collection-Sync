@@ -1,12 +1,12 @@
-import { Map } from 'immutable';
+import DocId from "./types/DocId";
 
 abstract class CollectionItem {
-  private _id: string | number;
+  private _id: DocId;
   private _updatedAt: Date;
-  private _document: object; // TODO: Should be parameterized somehow.
+  private _document: object; // TODO: Should be parameterized somehow (i.e. use a T type instead of object).
   private _deleted: boolean;
 
-  get id(): string | number{
+  get id(): DocId{
     return this._id;
   }
 
@@ -22,26 +22,17 @@ abstract class CollectionItem {
     return this._deleted;
   }
 
-  constructor(id: string | number, d: object, updatedAt: Date){
+  constructor(id: DocId, d: object, updatedAt: Date, deleted: boolean = false){
     this._id = id;
     this._document = d;
     this._updatedAt = updatedAt;
-    this._deleted = false;
+    this._deleted = deleted;
   }
 
   update(d: object, updatedAt: Date, deleted: boolean){
     this._document = d;
     this._updatedAt = updatedAt;
     this._deleted = deleted;
-  }
-
-  toObject(): Map<any, any>{
-    return Map({
-      id: this._id,
-      document: this._document,
-      deleted: this._deleted,
-      updatedAt: this._updatedAt
-    });
   }
 }
 
