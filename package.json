@@ -11,6 +11,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^27.0.1",
+    "@types/nedb": "^1.8.12",
     "@types/node": "^16.7.13",
     "jest": "^27.1.0",
     "nedb": "^1.8.0",

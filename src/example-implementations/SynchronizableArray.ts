@@ -12,6 +12,10 @@ class SynchronizableArray extends SynchronizableCollection{
     this.array = List(array).toArray(); // It seems R.clone doesn't work for cloning (several tests fail).
   }
 
+  async initialize(){
+
+  }
+
   countAll(): number{
     return this.array.length;
   }

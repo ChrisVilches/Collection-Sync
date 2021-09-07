@@ -11,6 +11,9 @@ class BasicSyncMetadata extends CollectionSyncMetadata{
     this._lastPostAt = lastPostAt;
   }
 
+  async initialize(){
+  }
+
   setLastFetchAt(d : Date): void{
     this._lastFetchAt = d;
   }
