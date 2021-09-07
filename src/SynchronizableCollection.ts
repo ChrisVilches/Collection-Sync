@@ -1,15 +1,10 @@
 import CollectionItem from "./CollectionItem";
 import ParentNotSetError from "./exceptions/ParentNotSetError";
-import { UpdateFromParentOptions, UpdateFromParentConflictStrategy } from "./types/UpdateFromParent";
-import { UpdateParentOptions, UpdateParentConflictStrategy } from "./types/UpdateParent";
+import { SyncOptions, SyncConflictStrategy } from "./types/SyncTypes";
 
 abstract class SynchronizableCollection {
-  protected readonly defaultUpdateFromParentOptions: UpdateFromParentOptions = {
-    conflictStrategy: UpdateFromParentConflictStrategy.RaiseError
-  };
-
-  protected readonly defaultUpdateParentOptions: UpdateParentOptions = {
-    conflictStrategy: UpdateParentConflictStrategy.RaiseError
+  protected readonly defaultSyncOptions: SyncOptions = {
+    conflictStrategy: SyncConflictStrategy.RaiseError
   };
 
   private _parent?: SynchronizableCollection;

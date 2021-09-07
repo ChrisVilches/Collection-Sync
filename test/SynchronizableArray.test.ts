@@ -3,8 +3,7 @@ import ParentNotSetError from "../src/exceptions/ParentNotSetError";
 import UpdateNewerItemError from "../src/exceptions/UpdateNewerItemError";
 import PersonItem from "../src/PersonItem";
 import DocId from "../src/types/DocId";
-import { UpdateFromParentConflictStrategy } from "../src/types/UpdateFromParent";
-import { UpdateParentConflictStrategy } from "../src/types/UpdateParent";
+import { SyncConflictStrategy } from "../src/types/SyncTypes";
 
 function makeItem(id: DocId, date: string): PersonItem{
   return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
@@ -78,7 +77,7 @@ describe("SynchronizableArray", () => {
   test(".updateFromParent with conflict (use parent data)", () => {
     slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
     expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
-    slaveSyncArray.updateFromParent({ conflictStrategy: UpdateFromParentConflictStrategy.UseParentData });
+    slaveSyncArray.updateFromParent({ conflictStrategy: SyncConflictStrategy.Force });
 
     // Uses parent data.
     expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2020/06/01"));
@@ -87,7 +86,7 @@ describe("SynchronizableArray", () => {
   test(".updateFromParent with conflict (use ignore strategy)", () => {
     slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
     expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
-    slaveSyncArray.updateFromParent({ conflictStrategy: UpdateFromParentConflictStrategy.Ignore });
+    slaveSyncArray.updateFromParent({ conflictStrategy: SyncConflictStrategy.Ignore });
     expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2028/06/01"));
   });
 
@@ -133,7 +132,7 @@ describe("SynchronizableArray", () => {
   test(".updateParent with conflict (use slave data)", () => {
     slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
     masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    slaveSyncArray.updateParent({ conflictStrategy: UpdateParentConflictStrategy.UseOwnData });
+    slaveSyncArray.updateParent({ conflictStrategy: SyncConflictStrategy.Force });
 
     // A little bit verbose.
     expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
@@ -143,7 +142,7 @@ describe("SynchronizableArray", () => {
   test(".updateParent with conflict (use ignore strategy)", () => {
     slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
     masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
-    slaveSyncArray.updateParent({ conflictStrategy: UpdateParentConflictStrategy.Ignore });
+    slaveSyncArray.updateParent({ conflictStrategy: SyncConflictStrategy.Ignore });
 
     // A little bit verbose.
     expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));

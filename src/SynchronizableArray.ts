@@ -1,8 +1,7 @@
 import CollectionItem from "./CollectionItem";
 import SynchronizableCollection from "./SynchronizableCollection";
 import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
-import { UpdateFromParentOptions, UpdateFromParentConflictStrategy } from "./types/UpdateFromParent";
-import { UpdateParentOptions, UpdateParentConflictStrategy } from "./types/UpdateParent";
+import { SyncOptions, SyncConflictStrategy } from "./types/SyncTypes";
 import DocId from "./types/DocId";
 import { List } from "immutable";
 
@@ -38,7 +37,7 @@ class SynchronizableArray extends SynchronizableCollection{
   }
 
   // TODO: Some of this code/logic should be in the base class.
-  updateFromParent(options: UpdateFromParentOptions = this.defaultUpdateFromParentOptions){
+  updateFromParent(options: SyncOptions = this.defaultSyncOptions){
     if(!this.needsFetchFromParent()) return;
 
     const items: CollectionItem[] = this.itemsToFetchFromParent();
@@ -50,9 +49,9 @@ class SynchronizableArray extends SynchronizableCollection{
       const found: CollectionItem | undefined = this.findById(id);
 
       if(found && found.updatedAt > item.updatedAt){
-        if(options.conflictStrategy == UpdateFromParentConflictStrategy.RaiseError){
+        if(options.conflictStrategy == SyncConflictStrategy.RaiseError){
           throw new UpdateNewerItemError(item.id);
-        } else if(options.conflictStrategy == UpdateFromParentConflictStrategy.UseParentData) {
+        } else if(options.conflictStrategy == SyncConflictStrategy.Force) {
           this.upsert(item);
         }
       } else {
@@ -63,7 +62,7 @@ class SynchronizableArray extends SynchronizableCollection{
     }
   }
 
-  updateParent(options: UpdateParentOptions = this.defaultUpdateParentOptions){
+  updateParent(options: SyncOptions = this.defaultSyncOptions){
     if(!this.needsToUpdateParent()) return;
 
     const items: CollectionItem[] = this.itemsToUpdateParent();
@@ -76,9 +75,9 @@ class SynchronizableArray extends SynchronizableCollection{
       const found: CollectionItem | undefined = (this.parent as SynchronizableArray).findById(id);
 
       if(found && found.updatedAt > item.updatedAt){
-        if(options.conflictStrategy == UpdateParentConflictStrategy.RaiseError){
+        if(options.conflictStrategy == SyncConflictStrategy.RaiseError){
           throw new UpdateNewerItemError(item.id);
-        } else if(options.conflictStrategy == UpdateParentConflictStrategy.UseOwnData){
+        } else if(options.conflictStrategy == SyncConflictStrategy.Force){
           parent.upsert(item);
         }
       } else {
