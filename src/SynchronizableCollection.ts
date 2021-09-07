@@ -3,6 +3,7 @@ import ParentNotSetError from "./exceptions/ParentNotSetError";
 import { SyncOptions, SyncConflictStrategy, SyncOperation } from "./types/SyncTypes";
 import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
 import Collection from "./Collection";
+import CollectionSyncMetadata from "./CollectionSyncMetadata";
 
 abstract class SynchronizableCollection extends Collection {
   protected readonly defaultSyncOptions: SyncOptions = {
@@ -11,18 +12,14 @@ abstract class SynchronizableCollection extends Collection {
 
   private _parent?: SynchronizableCollection;
 
-  // Stores the last time it was synced with the parent node.
-  // If the collection is a root node, then this should be undefined.
-  private _lastFetchAt?: Date; // TODO: Turn into an abstract method?
-  private _lastPostAt?: Date;
+  /** Used to keep state of sync process. */
+  private lastSyncedItem?: CollectionItem;
 
-  // TODO: This date should be set internally (i.e. set as private or protected).
-  set lastFetchAt(d : Date){
-    this._lastFetchAt = d;
-  }
+  protected syncMetadata: CollectionSyncMetadata;
 
-  set lastPostAt(d : Date){
-    this._lastPostAt = d;
+  constructor(syncMetadata: CollectionSyncMetadata){
+    super();
+    this.syncMetadata = syncMetadata;
   }
 
   set parent(p: SynchronizableCollection | undefined){
@@ -43,14 +40,9 @@ abstract class SynchronizableCollection extends Collection {
     // No data to sync.
     if(latestUpdatedItem == null) return false;
 
-    switch(syncOperation){
-      case SyncOperation.Post:
-        if(!this._lastPostAt) return true;
-        return this._lastPostAt < latestUpdatedItem.updatedAt;
-      case SyncOperation.Fetch:
-        if(!this._lastFetchAt) return true;
-        return this._lastFetchAt < latestUpdatedItem.updatedAt;
-    }
+    const lastAt = await this.syncMetadata.getLastAt(syncOperation);
+    if(!lastAt) return true;
+    return lastAt < latestUpdatedItem.updatedAt;
   }
 
   // TODO: Make sure items are in updatedAt order. Or implement something that ensures it,
@@ -60,7 +52,7 @@ abstract class SynchronizableCollection extends Collection {
   //       (So that the items prior to the conflict are not synced again).
   //
   //       Code that checks this should be in the non-extendable part (not user defined classes).
-  async itemsToFetchFromParent(): Promise<CollectionItem[]>{
+  async itemsToFetch(): Promise<CollectionItem[]>{
     if(this._parent == undefined){
       throw new ParentNotSetError("Cannot fetch from parent");
     }
@@ -69,7 +61,9 @@ abstract class SynchronizableCollection extends Collection {
       return [];
     }
 
-    return (this._parent as SynchronizableCollection).itemsNewerThan(this._lastFetchAt);
+    const lastFetchAt = await this.syncMetadata.getLastAt(SyncOperation.Fetch);
+
+    return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt);
   }
 
   async itemsToPost(): Promise<CollectionItem[]>{
@@ -81,22 +75,35 @@ abstract class SynchronizableCollection extends Collection {
       return [];
     }
 
-    return await this.itemsNewerThan(this._lastPostAt);
+    const lastPostAt = await this.syncMetadata.getLastPostAt();
+    return await this.itemsNewerThan(lastPostAt);
   }
 
-  async fetch(options: SyncOptions = this.defaultSyncOptions){
-    if(!this.needsSync(SyncOperation.Fetch)) return;
-    const items: CollectionItem[] = await this.itemsToFetchFromParent();
-    await this.syncItems(items, SyncOperation.Fetch, options);
+  async itemsToSync(syncOperation: SyncOperation): Promise<CollectionItem[]>{
+    switch(syncOperation){
+      case SyncOperation.Fetch:
+        return this.itemsToFetch();
+      case SyncOperation.Post:
+        return this.itemsToPost();
+    }
   }
 
-  async post(options: SyncOptions = this.defaultSyncOptions){
-    if(!this.needsSync(SyncOperation.Post)) return;
-    const items: CollectionItem[] = await this.itemsToPost();
-    await this.syncItems(items, SyncOperation.Post, options);
+  async sync(syncOperation: SyncOperation, options: SyncOptions = this.defaultSyncOptions){
+    if(!this.needsSync(syncOperation)) return;
+    const items: CollectionItem[] = await this.itemsToSync(syncOperation);
+
+    try {
+      await this.syncItems(items, syncOperation, options);
+    } finally {
+      if(this.lastSyncedItem){
+        this.syncMetadata.setLastAt(this.lastSyncedItem.updatedAt, syncOperation);
+      }
+    }
   }
 
   async syncItems(items: CollectionItem[], syncOperation: SyncOperation, options: SyncOptions){
+    this.lastSyncedItem = undefined;
+
     for(let i=0; i<items.length; i++){
       const item = items[i];
       let found: CollectionItem | undefined;
@@ -118,11 +125,7 @@ abstract class SynchronizableCollection extends Collection {
         throw new UpdateNewerItemError(item.id);
       }
 
-      if(syncOperation == SyncOperation.Fetch){
-        this.lastFetchAt = item.updatedAt;
-      } else {
-        this.lastPostAt = item.updatedAt;
-      }
+      this.lastSyncedItem = item;
     }
   }
 }
