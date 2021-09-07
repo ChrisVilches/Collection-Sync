@@ -1,15 +1,17 @@
 import CollectionItem from "./CollectionItem";
 import SynchronizableCollection from "./SynchronizableCollection";
-import LocalItemNewerThanParentItemError from "./exceptions/LocalItemNewerThanParentItemError";
+import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
 import { UpdateFromParentOptions, UpdateFromParentConflictStrategy } from "./types/UpdateFromParent";
+import { UpdateParentOptions, UpdateParentConflictStrategy } from "./types/UpdateParent";
 import DocId from "./types/DocId";
+import { List } from "immutable";
 
 class SynchronizableArray extends SynchronizableCollection{
   array: CollectionItem[];
 
   constructor(array: CollectionItem[]){
     super();
-    this.array = array;
+    this.array = List(array).toArray(); // It seems R.clone doesn't work for cloning (several tests fail).
   }
 
   itemsNewerThan(date: Date | undefined): CollectionItem[]{
@@ -47,15 +49,43 @@ class SynchronizableArray extends SynchronizableCollection{
 
       const found: CollectionItem | undefined = this.findById(id);
 
-      // This error is only thrown if the conflict resolution strategy is NOT to use parent data.
-      // Note that the only other strategy is to raise exception.
-      if(found && options.conflictStrategy != UpdateFromParentConflictStrategy.UseParentData && found.updatedAt > item.updatedAt){
-        throw new LocalItemNewerThanParentItemError(item.id);
+      if(found && found.updatedAt > item.updatedAt){
+        if(options.conflictStrategy == UpdateFromParentConflictStrategy.RaiseError){
+          throw new UpdateNewerItemError(item.id);
+        } else if(options.conflictStrategy == UpdateFromParentConflictStrategy.UseParentData) {
+          this.upsert(item);
+        }
+      } else {
+        this.upsert(item);
       }
 
-      this.upsert(item);
+      this.lastFetchAt = item.updatedAt;
+    }
+  }
 
-      this.lastSyncAt = item.updatedAt;
+  updateParent(options: UpdateParentOptions = this.defaultUpdateParentOptions){
+    if(!this.needsToUpdateParent()) return;
+
+    const items: CollectionItem[] = this.itemsToUpdateParent();
+    const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
+
+    for(let i=0; i<items.length; i++){
+      const item = items[i];
+      const id = item.id;
+
+      const found: CollectionItem | undefined = (this.parent as SynchronizableArray).findById(id);
+
+      if(found && found.updatedAt > item.updatedAt){
+        if(options.conflictStrategy == UpdateParentConflictStrategy.RaiseError){
+          throw new UpdateNewerItemError(item.id);
+        } else if(options.conflictStrategy == UpdateParentConflictStrategy.UseOwnData){
+          parent.upsert(item);
+        }
+      } else {
+        parent.upsert(item);
+      }
+
+      this.lastPostAt = item.updatedAt;
     }
   }
 

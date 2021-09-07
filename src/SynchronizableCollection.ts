@@ -1,21 +1,31 @@
 import CollectionItem from "./CollectionItem";
 import ParentNotSetError from "./exceptions/ParentNotSetError";
 import { UpdateFromParentOptions, UpdateFromParentConflictStrategy } from "./types/UpdateFromParent";
+import { UpdateParentOptions, UpdateParentConflictStrategy } from "./types/UpdateParent";
 
 abstract class SynchronizableCollection {
   protected readonly defaultUpdateFromParentOptions: UpdateFromParentOptions = {
     conflictStrategy: UpdateFromParentConflictStrategy.RaiseError
   };
 
+  protected readonly defaultUpdateParentOptions: UpdateParentOptions = {
+    conflictStrategy: UpdateParentConflictStrategy.RaiseError
+  };
+
   private _parent?: SynchronizableCollection;
 
   // Stores the last time it was synced with the parent node.
   // If the collection is a root node, then this should be undefined.
-  private _lastSyncAt?: Date; // TODO: Turn into an abstract method?
+  private _lastFetchAt?: Date; // TODO: Turn into an abstract method?
+  private _lastPostAt?: Date;
 
   // TODO: This date should be set internally (i.e. set as private or protected).
-  set lastSyncAt(d : Date){
-    this._lastSyncAt = d;
+  set lastFetchAt(d : Date){
+    this._lastFetchAt = d;
+  }
+
+  set lastPostAt(d : Date){
+    this._lastPostAt = d;
   }
 
   set parent(p: SynchronizableCollection | undefined){
@@ -34,9 +44,24 @@ abstract class SynchronizableCollection {
 
     if(lastParentUpdate == null) return false;
 
-    if(!this._lastSyncAt) return true;
+    if(!this._lastFetchAt) return true;
 
-    return this._lastSyncAt < lastParentUpdate;
+    return this._lastFetchAt < lastParentUpdate;
+  }
+
+  /** Checks if it has data to post to parent. */
+  needsToUpdateParent(): boolean{
+    if(!this._parent) return false;
+
+    const lastUpdate = this.latestUpdateAt();
+
+    // Has no data.
+    if(lastUpdate == null) return false;
+
+    // Has never been synced (and has data).
+    if(this._lastPostAt == undefined) return true;
+
+    return this._lastPostAt < lastUpdate;
   }
 
   // TODO: Make sure items are in updatedAt order. Or implement something that ensures it,
@@ -55,7 +80,19 @@ abstract class SynchronizableCollection {
       return [];
     }
 
-    return (this._parent as SynchronizableCollection).itemsNewerThan(this._lastSyncAt);
+    return (this._parent as SynchronizableCollection).itemsNewerThan(this._lastFetchAt);
+  }
+
+  itemsToUpdateParent(): CollectionItem[]{
+    if(this._parent == undefined){
+      throw new ParentNotSetError("Cannot update parent");
+    }
+
+    if(!this.needsToUpdateParent()){
+      return [];
+    }
+
+    return this.itemsNewerThan(this._lastPostAt);
   }
 
   abstract upsert(item: CollectionItem): CollectionItem;

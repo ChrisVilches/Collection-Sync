@@ -19,6 +19,8 @@
     "typescript": "^4.4.2"
   },
   "dependencies": {
-    "immutable": "^4.0.0-rc.14"
+    "@types/ramda": "^0.27.44",
+    "immutable": "^4.0.0-rc.14",
+    "ramda": "^0.27.1"
   }
 }

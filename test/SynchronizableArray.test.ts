@@ -1,15 +1,19 @@
 import SynchronizableArray from "../src/SynchronizableArray";
 import ParentNotSetError from "../src/exceptions/ParentNotSetError";
-import LocalItemNewerThanParentItemError from "../src/exceptions/LocalItemNewerThanParentItemError";
+import UpdateNewerItemError from "../src/exceptions/UpdateNewerItemError";
 import PersonItem from "../src/PersonItem";
+import DocId from "../src/types/DocId";
 import { UpdateFromParentConflictStrategy } from "../src/types/UpdateFromParent";
+import { UpdateParentConflictStrategy } from "../src/types/UpdateParent";
+
+function makeItem(id: DocId, date: string): PersonItem{
+  return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
+}
 
 const personItems: PersonItem[] = [
-  new PersonItem("chris123", { name: "Christopher", age: 29 }, new Date("2020/01/01")),
-  new PersonItem("marisel34", { name: "Marisel", age: 28 }, new Date("2020/06/01"))
+  makeItem("chris123", "2020/01/01"),
+  makeItem("marisel34", "2020/06/01")
 ];
-
-const newerItem: PersonItem = new PersonItem("marisel34", { name: "Marisel", age: 28 }, new Date("2022/06/01"));
 
 let slaveSyncArray: SynchronizableArray;
 let masterSyncArray: SynchronizableArray;
@@ -20,7 +24,8 @@ const initializeMock = () => {
   masterSyncArray = new SynchronizableArray(personItems);
   
   slaveSyncArray.parent = masterSyncArray;
-  slaveSyncArray.lastSyncAt = new Date("2020/02/01");
+  slaveSyncArray.lastFetchAt = new Date("2020/02/01");
+  slaveSyncArray.lastPostAt = new Date("2001/02/01");
 
   syncArrayManyItems = new SynchronizableArray([
     new PersonItem(1, { name: "a", age: 15 }, new Date("2020/01/01")),
@@ -56,7 +61,7 @@ describe("SynchronizableArray", () => {
   });
 
   test(".updateFromParent with conflict", () => {
-    slaveSyncArray.upsert(newerItem);
+    slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
     expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
 
     let err: any;
@@ -66,17 +71,83 @@ describe("SynchronizableArray", () => {
       err = e;
     }
 
-    expect(err).toBeInstanceOf(LocalItemNewerThanParentItemError);
+    expect(err).toBeInstanceOf(UpdateNewerItemError);
     expect(err.id).toEqual("marisel34");
   });
 
   test(".updateFromParent with conflict (use parent data)", () => {
-    slaveSyncArray.upsert(newerItem);
+    slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
     expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
     slaveSyncArray.updateFromParent({ conflictStrategy: UpdateFromParentConflictStrategy.UseParentData });
 
     // Uses parent data.
     expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2020/06/01"));
+  });
+
+  test(".updateFromParent with conflict (use ignore strategy)", () => {
+    slaveSyncArray.upsert(makeItem("marisel34", "2028/06/01"));
+    expect(slaveSyncArray.needsFetchFromParent()).toBeTruthy();
+    slaveSyncArray.updateFromParent({ conflictStrategy: UpdateFromParentConflictStrategy.Ignore });
+    expect(slaveSyncArray.array[0].updatedAt).toEqual(new Date("2028/06/01"));
+  });
+
+  test(".needsToUpdateParent", () => {
+    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
+    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
+  });
+
+  test(".updateParent", () => {
+    expect(slaveSyncArray.array).toHaveLength(0);
+    expect(masterSyncArray.array).toHaveLength(2);
+    slaveSyncArray.upsert(new PersonItem(1231, { name: "x", age: 50 }, new Date("2026/01/01")));
+    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
+    slaveSyncArray.updateParent();
+    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+
+    slaveSyncArray.upsert(new PersonItem(1232, { name: "x", age: 50 }, new Date("2027/01/01")));
+    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
+    slaveSyncArray.updateParent();
+    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+    expect(slaveSyncArray.array).toHaveLength(2);
+    expect(masterSyncArray.array).toHaveLength(4);
+  });
+
+  test(".updateParent corrupted updatedAt does not get posted", () => {
+    expect(slaveSyncArray.array).toHaveLength(0);
+    expect(masterSyncArray.array).toHaveLength(2);
+    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("1995/01/01")));
+    expect(slaveSyncArray.needsToUpdateParent()).toBeFalsy();
+    slaveSyncArray.updateParent();
+    expect(slaveSyncArray.array).toHaveLength(1);
+    expect(masterSyncArray.array).toHaveLength(2);
+  });
+
+  test(".updateParent with conflict", () => {
+    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
+    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
+    expect(slaveSyncArray.needsToUpdateParent()).toBeTruthy();
+    expect(() => { slaveSyncArray.updateParent() }).toThrowError(UpdateNewerItemError);
+  });
+
+  test(".updateParent with conflict (use slave data)", () => {
+    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
+    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
+    slaveSyncArray.updateParent({ conflictStrategy: UpdateParentConflictStrategy.UseOwnData });
+
+    // A little bit verbose.
+    expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
+    expect((masterSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
+  });
+
+  test(".updateParent with conflict (use ignore strategy)", () => {
+    slaveSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2025/01/01")));
+    masterSyncArray.upsert(new PersonItem(123, { name: "x", age: 50 }, new Date("2026/01/01")));
+    slaveSyncArray.updateParent({ conflictStrategy: UpdateParentConflictStrategy.Ignore });
+
+    // A little bit verbose.
+    expect((slaveSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2025/01/01"));
+    expect((masterSyncArray.findById(123) as PersonItem).updatedAt).toEqual(new Date("2026/01/01"));
   });
 
   test(".itemsNewerThan (result sorted by date ASC)", () => {
