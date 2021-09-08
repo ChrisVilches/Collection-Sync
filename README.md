@@ -2,7 +2,7 @@
 
 TODO: Under construction. Add quick description.
 
-See [Documentation](./docs/modules.md).
+See [Documentation](/docs/modules.md).
 
 ## Use cases
 
@@ -139,7 +139,7 @@ class MySyncMetadata extends CollectionSyncMetadata{
 
 Note that both classes have a `initialize` method. Some storage mechanisms require to open a file, create a DB connection, or do some asynchronous logic before beginning to use them. You can put that logic there.
 
-In this example, however, we'll import and use `BasicSyncMetadata` (TODO: Link to documentation), which provides an in-memory storage for synchronization metadata. This is the simplest way to get started.
+In this example, however, we'll import and use [BasicSyncMetadata](/docs/classes/BasicSyncMetadata.md), which provides an in-memory storage for synchronization metadata. This is the simplest way to get started.
 
 Add a new import to the top of the file:
 
@@ -177,7 +177,7 @@ If we assume that some data exists in the datastore `collectionMaster` is pointi
 collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Force });
 ```
 
-When syncing, conflicts might occur, and there are a few strategies to overcome them. See (TODO: Link to documentation) for details.
+When syncing, conflicts might occur, and there are a few strategies to overcome them. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 
 A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated.
 
