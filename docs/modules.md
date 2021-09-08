@@ -11,6 +11,7 @@
 
 ### Classes
 
+- [BasicSyncMetadata](classes/BasicSyncMetadata.md)
 - [Collection](classes/Collection.md)
 - [CollectionItem](classes/CollectionItem.md)
 - [CollectionSyncMetadata](classes/CollectionSyncMetadata.md)

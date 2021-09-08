@@ -45,7 +45,7 @@
 
 #### Defined in
 
-[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L7)
+[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L7)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 #### Defined in
 
-[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L12)
+[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L12)
 
 ___
 
@@ -85,7 +85,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L9)
+[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L9)
 
 ___
 
@@ -110,7 +110,7 @@ will be executed).
 
 #### Defined in
 
-[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L20)
+[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L20)
 
 ___
 
@@ -126,7 +126,7 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L25)
+[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L25)
 
 ___
 
@@ -146,4 +146,4 @@ ___
 
 #### Defined in
 
-[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/Collection.ts#L14)
+[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L14)

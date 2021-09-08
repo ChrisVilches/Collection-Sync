@@ -20,7 +20,7 @@ Keep data from the side that initiated the sync.
 
 #### Defined in
 
-[types/SyncTypes.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/types/SyncTypes.ts#L3)
+[types/SyncTypes.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/types/SyncTypes.ts#L3)
 
 ___
 
@@ -33,7 +33,7 @@ sync must not use ignore and throw error and select option.
 
 #### Defined in
 
-[types/SyncTypes.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/types/SyncTypes.ts#L12)
+[types/SyncTypes.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/types/SyncTypes.ts#L12)
 
 ___
 
@@ -45,4 +45,4 @@ Abort sync.
 
 #### Defined in
 
-[types/SyncTypes.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/types/SyncTypes.ts#L6)
+[types/SyncTypes.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/types/SyncTypes.ts#L6)

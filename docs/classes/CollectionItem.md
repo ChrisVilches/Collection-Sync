@@ -42,7 +42,7 @@ Contains an ID that identifies the synchronizable object, the document data itse
 
 #### Defined in
 
-[CollectionItem.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L21)
+[CollectionItem.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L21)
 
 ## Properties
 
@@ -52,7 +52,7 @@ Contains an ID that identifies the synchronizable object, the document data itse
 
 #### Defined in
 
-[CollectionItem.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L7)
+[CollectionItem.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L7)
 
 ___
 
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L5)
+[CollectionItem.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L5)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L6)
+[CollectionItem.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L6)
 
 ## Accessors
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L17)
+[CollectionItem.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L17)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L9)
+[CollectionItem.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L9)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L13)
+[CollectionItem.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L13)
 
 ## Methods
 
@@ -135,4 +135,4 @@ ___
 
 #### Defined in
 
-[CollectionItem.ts:30](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionItem.ts#L30)
+[CollectionItem.ts:30](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionItem.ts#L30)

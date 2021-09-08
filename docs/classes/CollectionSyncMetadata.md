@@ -2,6 +2,12 @@
 
 # Class: CollectionSyncMetadata
 
+## Hierarchy
+
+- **`CollectionSyncMetadata`**
+
+  ↳ [`BasicSyncMetadata`](BasicSyncMetadata.md)
+
 ## Implements
 
 - [`IInitializable`](../interfaces/IInitializable.md)
@@ -46,7 +52,7 @@
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L21)
+[CollectionSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L21)
 
 ___
 
@@ -60,7 +66,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L8)
+[CollectionSyncMetadata.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L8)
 
 ___
 
@@ -74,7 +80,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L9)
+[CollectionSyncMetadata.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L9)
 
 ___
 
@@ -94,7 +100,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L11)
+[CollectionSyncMetadata.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L11)
 
 ___
 
@@ -115,7 +121,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L13)
+[CollectionSyncMetadata.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L13)
 
 ___
 
@@ -135,7 +141,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L5)
+[CollectionSyncMetadata.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L5)
 
 ___
 
@@ -155,4 +161,4 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/1f1b4b7/src/CollectionSyncMetadata.ts#L6)
+[CollectionSyncMetadata.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L6)

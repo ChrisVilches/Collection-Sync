@@ -2,7 +2,7 @@
 
 TODO: Under construction. Add quick description.
 
-See [Documentation](./docs).
+See [Documentation](./docs/modules.md).
 
 ## Use cases
 
@@ -141,7 +141,7 @@ Note that both classes have a `initialize` method. Some storage mechanisms requi
 
 In this example, however, we'll import and use `BasicSyncMetadata` (TODO: Link to documentation), which provides an in-memory storage for synchronization metadata. This is the simplest way to get started.
 
-Add a new import to the top of the file (TODO: test):
+Add a new import to the top of the file:
 
 ```ts
 import { BasicSyncMetadata } from "collection-sync";
