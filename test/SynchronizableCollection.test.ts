@@ -67,6 +67,10 @@ const executeAllTests = (options: TestExecutionArgument) => {
   describe("SynchronizableArray", () => {
     beforeEach(initializeMock);
 
+    afterAll(() => {
+      require("child_process").execSync("rm -f ./tmp/*data_sync*.json");
+    });
+
     test(".array (initial constructor)", async () => {
       expect(await slave.countAll()).toEqual(0);
       expect(await master.countAll()).toEqual(2);
@@ -217,6 +221,10 @@ const executeAllTests = (options: TestExecutionArgument) => {
     test(".itemsNewerThan (result sorted by date ASC) with limit", async () => {
       const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"), 3);
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7]);
+    });
+
+    xtest(".sync when items are not sorted correctly", () => {
+      // expect error.
     });
   });
 }

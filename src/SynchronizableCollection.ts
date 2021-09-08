@@ -49,13 +49,6 @@ abstract class SynchronizableCollection extends Collection {
     return lastAt < latestUpdatedItem.updatedAt;
   }
 
-  // TODO: Make sure items are in updatedAt order. Or implement something that ensures it,
-  //       and/or throws an error if it detects its not sorted. This is because the algorithm
-  //       would stop when it encounters a conflict, having updated everything with a updatedAt
-  //       lower than the current element, possibly modifying the lastSyncAt to that point in time.
-  //       (So that the items prior to the conflict are not synced again).
-  //
-  //       Code that checks this should be in the non-extendable part (not user defined classes).
   private async itemsToFetch(limit: number): Promise<CollectionItem[]>{
     const lastFetchAt = await this.syncMetadata.getLastAt(SyncOperation.Fetch);
     return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt, limit);
@@ -66,7 +59,7 @@ abstract class SynchronizableCollection extends Collection {
     return await this.itemsNewerThan(lastPostAt, limit);
   }
 
-  // TODO: Should be private?
+  /** Gets list of items that can be synced (to either fetch or post). */
   async itemsToSync(syncOperation: SyncOperation, limit: number): Promise<CollectionItem[]>{
     if(!this._parent){
       throw new ParentNotSetError("Cannot sync to parent");
@@ -101,7 +94,23 @@ abstract class SynchronizableCollection extends Collection {
     }
   }
 
+  private areItemsSorted(items: CollectionItem[]): boolean{
+    if(items.length < 2) return true;
+    let curr: CollectionItem = items[0];
+
+    for(let i=1; i<items.length; i++){
+      if(curr.updatedAt > items[i].updatedAt) return false;
+      curr = items[i];
+    }
+
+    return true;
+  }
+
   async syncItems(items: CollectionItem[], syncOperation: SyncOperation, options: SyncOptions): Promise<void>{
+    if(!this.areItemsSorted(items)){
+      throw new Error("Items to sync are not ordered correctly (order must be updatedAt ASC)");
+    }
+
     this.lastSyncedItem = undefined;
     const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
     const force = options.conflictStrategy == SyncConflictStrategy.Force;
