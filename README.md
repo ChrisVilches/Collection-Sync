@@ -179,9 +179,7 @@ collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictS
 
 See [sync](/docs/classes/SynchronizableCollection.md#sync) method documentation.
 
-When syncing, conflicts might occur, and there are a few strategies to overcome them. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
-
-A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated.
+When syncing, conflicts might occur, and there are a few strategies to overcome them. A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 
 ## Another example
 
