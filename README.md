@@ -1,6 +1,6 @@
 # Collection Sync
 
-TODO: Under construction. Add quick description.
+Javascript Library for database synchronization between local and server. Customizable and completely database agnostic.
 
 See [Documentation](/docs/modules.md).
 
