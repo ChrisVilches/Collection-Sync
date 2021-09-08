@@ -9,7 +9,7 @@ See [Documentation](/docs/modules.md).
 Some examples where this mechanism would be useful:
 
 * Memo app that works offline, and updates remote database when it goes online.
-* Multiplatform app (desktop, smartphone, web app) which works offline (in mobile and desktop), and updates remote database when going online. When using the app in a different device, the new data is downloaded, making all devices up to date.
+* Multiplatform app (desktop, mobile, web app) which works offline (in mobile and desktop), and updates remote database when going online. When using the app in a different device, the new data is downloaded, making all devices up to date.
 
 ## Install
 
@@ -84,7 +84,7 @@ All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
 
-In cases where the local collection is a database in a smartphone app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
+In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
 
 If both collections are inside a private/secure network, then connecting directly to another database would be fine.
 
@@ -196,7 +196,7 @@ pc.parent = backend;
 // Data that only exists in Android devide is being pushed...
 android.sync(SyncOperation.Post, 1000);
 
-// PC now has data that previously only Android device had.
+// PC device now has data that previously only the Android device had.
 pc.sync(SyncOperation.Fetch, 1000);
 ```
 
