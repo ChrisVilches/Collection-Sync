@@ -4,6 +4,7 @@ import CollectionSyncMetadata from "./CollectionSyncMetadata";
 import CollectionItem from "./CollectionItem";
 import Collection from "./Collection";
 import { SyncConflictStrategy, SyncOperation } from "./types/SyncTypes";
+import BasicSyncMetadata from "./example-implementations/BasicSyncMetadata";
 
 export {
   IInitializable,
@@ -12,5 +13,6 @@ export {
   CollectionItem,
   Collection,
   SyncConflictStrategy,
-  SyncOperation
+  SyncOperation,
+  BasicSyncMetadata
 };
