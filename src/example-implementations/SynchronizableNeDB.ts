@@ -47,12 +47,11 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  findById(id: DocId): Promise<CollectionItem>{
+  findByIds(ids: DocId[]): Promise<CollectionItem[]>{
     return new Promise((resolve, reject) => {
-      this.db?.findOne({ [ID_ATTRIBUTE_NAME]: id }, (err, doc) => {
+      this.db?.find({ [ID_ATTRIBUTE_NAME]: { $in: ids }}, (err: any, docs: any) => {
         if(err) return reject(err);
-        doc = this.makeItem(doc);
-        resolve(doc);
+        resolve(docs.map(this.makeItem));
       });
     });
   }

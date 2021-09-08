@@ -76,7 +76,7 @@ describe("SynchronizableArray", () => {
 
   test(".needsSync (fetch)", async () => {
     await slave.sync(SyncOperation.Fetch);
-    expect(await slave.findById(personItems[1].id)).toBe(personItems[1]);
+    expect((await slave.findByIds([personItems[1].id]))[0]?.id).toBe(personItems[1].id);
     expect(await slave.needsSync(SyncOperation.Fetch)).toBeFalsy();
   });
 
@@ -101,14 +101,14 @@ describe("SynchronizableArray", () => {
     await slave.sync(SyncOperation.Fetch, { conflictStrategy: SyncConflictStrategy.Force });
 
     // Uses parent data.
-    expect((await slave.findById("marisel34"))?.updatedAt).toEqual(new Date("2020/06/01"));
+    expect((await slave.findByIds(["marisel34"]))[0]?.updatedAt).toEqual(new Date("2020/06/01"));
   });
 
   test(".sync (fetch) with conflict (use ignore strategy)", async () => {
     slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
     expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
     await slave.sync(SyncOperation.Fetch, { conflictStrategy: SyncConflictStrategy.Ignore });
-    expect((await slave.findById("marisel34"))?.updatedAt).toEqual(new Date("2028/06/01"));
+    expect((await slave.findByIds(["marisel34"]))[0]?.updatedAt).toEqual(new Date("2028/06/01"));
   });
 
   test(".needsSync (post)", async () => {
@@ -166,8 +166,8 @@ describe("SynchronizableArray", () => {
     slave.upsertBatch([makeItem(123, "2025/01/01")]);
     master.upsertBatch([makeItem(123, "2026/01/01")]);
     await slave.sync(SyncOperation.Post, { conflictStrategy: SyncConflictStrategy.Force });
-    expect((await slave.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
-    expect((await master.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
+    expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
+    expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
   });
 
   test(".sync (post) with conflict (use ignore strategy)", async () => {
@@ -185,8 +185,8 @@ describe("SynchronizableArray", () => {
     ]);
     master.upsertBatch([makeItem(123, "2026/01/01")]);
     await slave.sync(SyncOperation.Post, { conflictStrategy: SyncConflictStrategy.Ignore });
-    expect((await slave.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
-    expect((await master.findById(123))?.updatedAt).toEqual(new Date("2026/01/01"));
+    expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
+    expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2026/01/01"));
 
     // NOTE: Latest post date is updated even if one is ignored.
     //       In this case, ignored item is NOT the last one to be synced.

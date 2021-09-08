@@ -1,5 +1,6 @@
 import DocId from "./types/DocId";
 
+/** Contains an ID that identifies the synchronizable object, the document data itself, and `updatedAt` (which is used to determine whether the document must be synchronized or not). */
 abstract class CollectionItem {
   private _id: DocId;
   private _updatedAt: Date;
@@ -18,6 +19,9 @@ abstract class CollectionItem {
   }
 
   constructor(id: DocId, document: any, updatedAt: Date){
+    if(!updatedAt){
+      throw new Error("Updated At must be defined");
+    }
     this._id = id;
     this._document = document;
     this._updatedAt = updatedAt;

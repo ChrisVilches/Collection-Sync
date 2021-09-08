@@ -28,8 +28,19 @@ class SynchronizableArray extends SynchronizableCollection{
                      .filter(item => date < item.updatedAt);
   }
 
-  findById(id: DocId): CollectionItem | undefined{
+  private findById(id: DocId): CollectionItem | undefined{
     return this.array.find((x: CollectionItem) => x.id == id);
+  }
+
+  findByIds(ids: DocId[]): CollectionItem[]{
+    const idSet = new Set(ids);
+    const result: CollectionItem[] = [];
+    for(let i=0; i<this.array.length; i++){
+      if(idSet.has(this.array[i].id)){
+        result.push(this.array[i]);
+      }
+    }
+    return result;
   }
 
   private upsert(item: CollectionItem){

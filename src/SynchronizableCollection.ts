@@ -1,9 +1,11 @@
 import CollectionItem from "./CollectionItem";
 import ParentNotSetError from "./exceptions/ParentNotSetError";
 import { SyncOptions, SyncConflictStrategy, SyncOperation } from "./types/SyncTypes";
+import DocId from "./types/DocId";
 import UpdateNewerItemError from "./exceptions/UpdateNewerItemError";
 import Collection from "./Collection";
 import CollectionSyncMetadata from "./CollectionSyncMetadata";
+import * as R from "ramda";
 
 // TODO: Many methods in this class could be private.
 
@@ -101,31 +103,69 @@ abstract class SynchronizableCollection extends Collection {
     }
   }
 
-  async syncItems(items: CollectionItem[], syncOperation: SyncOperation, options: SyncOptions){
+  async syncItems(items: CollectionItem[], syncOperation: SyncOperation, options: SyncOptions): Promise<void>{
     this.lastSyncedItem = undefined;
+    const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
+    const force = options.conflictStrategy == SyncConflictStrategy.Force;
+
+    let compareObjects: {[key: DocId]: CollectionItem} = {};
+
+    switch(syncOperation){
+      case SyncOperation.Fetch:
+        compareObjects = R.indexBy(R.prop('id'), await this.findByIds(items.map(i => i.id)));
+        break;
+      case SyncOperation.Post:
+        compareObjects = R.indexBy(R.prop('id'), await parent.findByIds(items.map(i => i.id)));
+        break;
+    }
+
+    // Decide which object will have .upsertBatch executed on.
+    const upsertObject: SynchronizableCollection = syncOperation == SyncOperation.Fetch ? this : parent;
+
+    const cleanItems: CollectionItem[] = [];
+
+    let conflictItem: CollectionItem | undefined = undefined;
+
+    let lastIgnoredItem: CollectionItem | undefined = undefined;
 
     for(let i=0; i<items.length; i++){
-      const item = items[i];
-      let found: CollectionItem | undefined;
-      const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
-
-      if(syncOperation == SyncOperation.Fetch){
-        found = await this.findById(item.id);
-      } else {
-        found = await parent.findById(item.id);
-      }
-
-      const upsertObject: any = syncOperation == SyncOperation.Fetch ? this : parent;
-      const conflict = found && found.updatedAt > item.updatedAt;
-      const force = options.conflictStrategy == SyncConflictStrategy.Force;
+      const objectToCompare = compareObjects[items[i].id];
+      const conflict = objectToCompare?.updatedAt > items[i].updatedAt;
 
       if(force || !conflict){
-        upsertObject.upsertBatch([item]);
+        cleanItems.push(items[i]);
       } else if(options.conflictStrategy == SyncConflictStrategy.RaiseError) {
-        throw new UpdateNewerItemError(item.id);
-      }
+        conflictItem = items[i];
 
-      this.lastSyncedItem = item;
+        // Abort when first conflict is encountered.
+        break;
+      } else if(options.conflictStrategy == SyncConflictStrategy.Ignore) {
+        lastIgnoredItem = items[i];
+      }
+    }
+
+    let upsertedItems: CollectionItem[] = [];
+
+    if(cleanItems.length > 0){
+      upsertedItems = await upsertObject.upsertBatch(cleanItems);
+    }
+
+    // Get last object. Set it after the upsert has completed without errors.
+    // Otherwise, if upsert failed, the value would be set (and therefore set the last sync date
+    // using that object, even if it failed).
+    let lastUpsertedItem: CollectionItem | undefined = upsertedItems[upsertedItems.length - 1];
+    this.lastSyncedItem = lastUpsertedItem;
+
+    // However, if one item was ignored (using ignore policy), and if that one is the latest one
+    // in the batch, then use that one to set the last sync date.
+    if(lastIgnoredItem){
+      if(!lastUpsertedItem || (lastIgnoredItem.updatedAt > lastUpsertedItem.updatedAt)){
+        this.lastSyncedItem = lastIgnoredItem;
+      }
+    }
+
+    if(conflictItem){
+      throw new UpdateNewerItemError(conflictItem.id);
     }
   }
 }
