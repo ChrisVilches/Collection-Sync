@@ -2,14 +2,14 @@ import CollectionItem from "../CollectionItem";
 import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
 import DocId from "../types/DocId";
-import { List } from "immutable";
+import CollectionSyncMetadata from "../CollectionSyncMetadata";
 
 class SynchronizableArray extends SynchronizableCollection{
   private array: CollectionItem[];
 
-  constructor(array: CollectionItem[], syncMetadata = new BasicSyncMetadata()){
+  constructor(syncMetadata: CollectionSyncMetadata = new BasicSyncMetadata()){
     super(syncMetadata);
-    this.array = List(array).toArray(); // It seems R.clone doesn't work for cloning (several tests fail).
+    this.array = [];
   }
 
   async initialize(){
