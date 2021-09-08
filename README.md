@@ -47,7 +47,7 @@ class CustomItem extends CollectionItem {
 }
 ```
 
-Then, create a class that extends `` and implement its abstract methods:
+Then, create a class that extends [SynchronizableCollection](/docs/classes/SynchronizableCollection.md) and implement its abstract methods:
 
 ```ts
 class LocalCollection extends SynchronizableCollection {
@@ -115,7 +115,7 @@ class RemoteCollection extends SynchronizableCollection {
 
 Finally, implement a mechanism to store and retrieve two dates (last fetch and post dates).
 
-It could be as simple as a text file. Persistent storage is recommended.
+A persistent storage is recommended.
 
 ```ts
 class MySyncMetadata extends CollectionSyncMetadata{
@@ -176,6 +176,8 @@ If we assume that some data exists in the datastore `collectionMaster` is pointi
 ```ts
 collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Force });
 ```
+
+See [sync](/docs/classes/SynchronizableCollection.md#sync) method documentation.
 
 When syncing, conflicts might occur, and there are a few strategies to overcome them. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 
