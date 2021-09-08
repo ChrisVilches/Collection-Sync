@@ -50,7 +50,7 @@ A simple sync metadata manager.
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L8)
+[example-implementations/BasicSyncMetadata.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L8)
 
 ## Properties
 
@@ -60,7 +60,7 @@ A simple sync metadata manager.
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L5)
+[example-implementations/BasicSyncMetadata.ts:5](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L5)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L6)
+[example-implementations/BasicSyncMetadata.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L6)
 
 ## Methods
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L21)
+[CollectionSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/CollectionSyncMetadata.ts#L21)
 
 ___
 
@@ -112,7 +112,7 @@ ___
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L25)
+[example-implementations/BasicSyncMetadata.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L25)
 
 ___
 
@@ -130,7 +130,7 @@ ___
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L29)
+[example-implementations/BasicSyncMetadata.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L29)
 
 ___
 
@@ -150,7 +150,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L14)
+[example-implementations/BasicSyncMetadata.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L14)
 
 ___
 
@@ -175,7 +175,7 @@ ___
 
 #### Defined in
 
-[CollectionSyncMetadata.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/CollectionSyncMetadata.ts#L13)
+[CollectionSyncMetadata.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/CollectionSyncMetadata.ts#L13)
 
 ___
 
@@ -199,7 +199,7 @@ ___
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L17)
+[example-implementations/BasicSyncMetadata.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L17)
 
 ___
 
@@ -223,4 +223,4 @@ ___
 
 #### Defined in
 
-[example-implementations/BasicSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/example-implementations/BasicSyncMetadata.ts#L21)
+[example-implementations/BasicSyncMetadata.ts:21](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/example-implementations/BasicSyncMetadata.ts#L21)

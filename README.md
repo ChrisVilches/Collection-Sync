@@ -204,7 +204,7 @@ In practice, you'd want to make your slave collection perform both post and fetc
 
 When a conflict is encountered, a suggestion is to ask the user to manually select how to solve them, and then trigger a new synchronization but using a different configuration (e.g. forcing data from the master collection to overwrite slave data).
 
-## Limitations
+## Current limitations and future work
 
 ### Locking mechanism
 
@@ -213,6 +213,16 @@ Locking mechanism (to prevent multiple devices from synchronizing at the same ti
 ### Handling conflicts
 
 Some applications may require a more granular control over conflicts. For now, a mechanism in which all conflicting records are not updated (i.e. they are skipped) but instead are stored in a cache has been proposed. With this approach, the user can deal with the conflicts in a future moment, or perhaps keep both versions of the record.
+
+### Sync lifecycle hooks
+
+In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion of record, etc.
+
+This would make it possible to also synchronize files to services like Amazon S3 (Simple Storage Service), since files in the local app might be stored in disk along with a local database that keeps track of them. In this situation, the user may create a custom code which executes right before the record syncing, and which uploads the file itself. Without custom code being inserted in the middle of the lifecycle it'd be inconvenient to implement this feature.
+
+### Rollback and commit
+
+Currently rollback and commit statements are not supported, and there's no plan to implement them.
 
 ## Develop
 

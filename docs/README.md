@@ -2,16 +2,16 @@ collection-sync / [Exports](modules.md)
 
 # Collection Sync
 
-TODO: Under construction. Add quick description.
+Javascript Library for database synchronization between local and server. Customizable and completely database agnostic.
 
-See [Documentation](./docs/modules.md).
+See [Documentation](/docs/modules.md).
 
 ## Use cases
 
 Some examples where this mechanism would be useful:
 
 * Memo app that works offline, and updates remote database when it goes online.
-* Multiplatform app (desktop, smartphone, web app) which works offline (in mobile and desktop), and updates remote database when going online. When using the app in a different device, the new data is downloaded, making all devices up to date.
+* Multiplatform app (desktop, mobile, web app) which works offline (in mobile and desktop), and updates remote database when going online. When using the app in a different device, the new data is downloaded, making all devices up to date.
 
 ## Install
 
@@ -33,7 +33,7 @@ import { SyncOperation, SyncConflictStrategy } from "collection-sync";
 import DocId from "collection-sync/dist/types/DocId";
 ```
 
-Create a class that extends `CollectionItem`, and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
+Create a class that extends [CollectionItem](/docs/classes/CollectionItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
 
 If we use Mongo's `_id`, when synchronizing from one database to another it might be impossible to set it, since some database engines auto generate the `_id` value, hence you must choose how to identify documents using a custom way.
 
@@ -49,7 +49,7 @@ class CustomItem extends CollectionItem {
 }
 ```
 
-Then, create a class that extends `` and implement its abstract methods:
+Then, create a class that extends [SynchronizableCollection](/docs/classes/SynchronizableCollection.md) and implement its abstract methods:
 
 ```ts
 class LocalCollection extends SynchronizableCollection {
@@ -86,7 +86,7 @@ All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
 
-In cases where the local collection is a database in a smartphone app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
+In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
 
 If both collections are inside a private/secure network, then connecting directly to another database would be fine.
 
@@ -117,7 +117,7 @@ class RemoteCollection extends SynchronizableCollection {
 
 Finally, implement a mechanism to store and retrieve two dates (last fetch and post dates).
 
-It could be as simple as a text file. Persistent storage is recommended.
+A persistent storage is recommended.
 
 ```ts
 class MySyncMetadata extends CollectionSyncMetadata{
@@ -141,7 +141,7 @@ class MySyncMetadata extends CollectionSyncMetadata{
 
 Note that both classes have a `initialize` method. Some storage mechanisms require to open a file, create a DB connection, or do some asynchronous logic before beginning to use them. You can put that logic there.
 
-In this example, however, we'll import and use `BasicSyncMetadata` (TODO: Link to documentation), which provides an in-memory storage for synchronization metadata. This is the simplest way to get started.
+In this example, however, we'll import and use [BasicSyncMetadata](/docs/classes/BasicSyncMetadata.md), which provides an in-memory storage for synchronization metadata. This is the simplest way to get started.
 
 Add a new import to the top of the file:
 
@@ -179,9 +179,9 @@ If we assume that some data exists in the datastore `collectionMaster` is pointi
 collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Force });
 ```
 
-When syncing, conflicts might occur, and there are a few strategies to overcome them. See (TODO: Link to documentation) for details.
+See [sync](/docs/classes/SynchronizableCollection.md#sync) method documentation.
 
-A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated.
+When syncing, conflicts might occur, and there are a few strategies to overcome them. A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 
 ## Another example
 
@@ -198,7 +198,7 @@ pc.parent = backend;
 // Data that only exists in Android devide is being pushed...
 android.sync(SyncOperation.Post, 1000);
 
-// PC now has data that previously only Android device had.
+// PC device now has data that previously only the Android device had.
 pc.sync(SyncOperation.Fetch, 1000);
 ```
 
@@ -206,9 +206,25 @@ In practice, you'd want to make your slave collection perform both post and fetc
 
 When a conflict is encountered, a suggestion is to ask the user to manually select how to solve them, and then trigger a new synchronization but using a different configuration (e.g. forcing data from the master collection to overwrite slave data).
 
-## Limitations
+## Current limitations and future work
 
-Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` methods to 'SynchronizableCollection' have been proposed.
+### Locking mechanism
+
+Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to 'SynchronizableCollection' have been proposed.
+
+### Handling conflicts
+
+Some applications may require a more granular control over conflicts. For now, a mechanism in which all conflicting records are not updated (i.e. they are skipped) but instead are stored in a cache has been proposed. With this approach, the user can deal with the conflicts in a future moment, or perhaps keep both versions of the record.
+
+### Sync lifecycle hooks
+
+In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion of record, etc.
+
+This would make it possible to also synchronize files to services like Amazon S3 (Simple Storage Service), since files in the local app might be stored in disk along with a local database that keeps track of them. In this situation, the user may create a custom code which executes right before the record syncing, and which uploads the file itself. Without custom code being inserted in the middle of the lifecycle it'd be inconvenient to implement this feature.
+
+### Rollback and commit
+
+Currently rollback and commit statements are not supported, and there's no plan to implement them.
 
 ## Develop
 

@@ -59,7 +59,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L24)
+[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L24)
 
 ## Properties
 
@@ -69,7 +69,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L17)
+[SynchronizableCollection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L17)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L13)
+[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L13)
 
 ___
 
@@ -91,7 +91,7 @@ Used to keep state of sync process.
 
 #### Defined in
 
-[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L20)
+[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L20)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L22)
+[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L22)
 
 ## Accessors
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L33)
+[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L33)
 
 • `set` **parent**(`p`): `void`
 
@@ -131,7 +131,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L29)
+[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L29)
 
 ## Methods
 
@@ -151,7 +151,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:97](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L97)
+[SynchronizableCollection.ts:97](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L97)
 
 ___
 
@@ -169,7 +169,7 @@ ___
 
 #### Defined in
 
-[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L7)
+[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L7)
 
 ___
 
@@ -193,7 +193,7 @@ ___
 
 #### Defined in
 
-[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L12)
+[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L12)
 
 ___
 
@@ -213,7 +213,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L9)
+[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L9)
 
 ___
 
@@ -242,7 +242,7 @@ will be executed).
 
 #### Defined in
 
-[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L20)
+[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L20)
 
 ___
 
@@ -262,7 +262,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L52)
+[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L52)
 
 ___
 
@@ -282,7 +282,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:57](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L57)
+[SynchronizableCollection.ts:57](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L57)
 
 ___
 
@@ -305,7 +305,7 @@ Gets list of items that can be synced (to either fetch or post).
 
 #### Defined in
 
-[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L63)
+[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L63)
 
 ___
 
@@ -325,7 +325,7 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L25)
+[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L25)
 
 ___
 
@@ -345,7 +345,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:37](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L37)
+[SynchronizableCollection.ts:37](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L37)
 
 ___
 
@@ -367,7 +367,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:80](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L80)
+[SynchronizableCollection.ts:80](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L80)
 
 ___
 
@@ -389,7 +389,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:109](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/SynchronizableCollection.ts#L109)
+[SynchronizableCollection.ts:109](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/SynchronizableCollection.ts#L109)
 
 ___
 
@@ -413,4 +413,4 @@ ___
 
 #### Defined in
 
-[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/75f59a1/src/Collection.ts#L14)
+[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L14)

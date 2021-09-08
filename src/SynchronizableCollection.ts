@@ -154,7 +154,18 @@ abstract class SynchronizableCollection extends Collection {
     let upsertedItems: CollectionItem[] = [];
 
     if(cleanItems.length > 0){
-      upsertedItems = await upsertObject.upsertBatch(cleanItems);
+      try {
+        // TODO: (Improvement) Pre-sync hook (as arguments, give them some info like the items to sync, etc).
+        upsertedItems = await upsertObject.upsertBatch(cleanItems);
+        // TODO: (Improvement) Post-sync hook.
+      } catch(e){
+        // TODO: (Improvement) Even after this error, it'd be great to know the status of the sync.
+        //       This feature is commented below as well. Maybe it'd be necessary to return something
+        //       like a "sync status object" (create interface) which contains all data, including if
+        //       there's an error. In fact, the error object could be inside that status object as well.
+        //       If the database engine used doesn't return the upserted count, then allow undefined for that number.
+        throw new Error("Upsert batch operation failed");
+      }
     }
 
     // Get last object. Set it after the upsert has completed without errors.
@@ -170,6 +181,10 @@ abstract class SynchronizableCollection extends Collection {
         this.lastSyncedItem = lastIgnoredItem;
       }
     }
+
+    // TODO: (Improvement) make it possible to get the status of the sync operation.
+    //       This means that even if an error occurred, be able to fetch which records were synced, which
+    //       ones weren't synced, which ones where ignored, etc.
 
     if(conflictItem){
       throw new UpdateNewerItemError(conflictItem.id);
