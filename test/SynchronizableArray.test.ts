@@ -46,7 +46,11 @@ const initializeMock = async () => {
     makeItem(2, "2015/06/01"),
     makeItem(3, "2018/06/01"),
     makeItem(4, "2016/06/01"),
-    makeItem(5, "2021/06/01")
+    makeItem(5, "2021/02/01"),
+    makeItem(6, "2014/05/01"),
+    makeItem(7, "2019/07/01"),
+    makeItem(8, "2023/03/01"),
+    makeItem(9, "2022/11/01")
   ];
 
   for(let i=0; i<manyItems.length; i++){
@@ -197,7 +201,6 @@ describe("SynchronizableArray", () => {
 
   test(".itemsNewerThan (result sorted by date ASC)", async () => {
     const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"));
-
-    expect(itemIds.map(i => i.id)).toEqual([4, 3, 1, 5]);
+    expect(itemIds.map(i => i.id)).toEqual([4, 3, 7, 1, 5, 9, 8]);
   });
 });
