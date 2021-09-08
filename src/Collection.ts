@@ -13,7 +13,13 @@ abstract class Collection implements IInitializable{
 
   abstract upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]> | CollectionItem[];
 
-  abstract itemsNewerThan(date: Date | undefined): Promise<CollectionItem[]> | CollectionItem[];
+  /** Returns a list of items that have `updatedAt` greater than argument provided.
+   * The list MUST be ordered by `updatedAt ASC`.
+   * Failing to provide it sorted will corrupt the data in case
+   * of conflict error (if it's ordered, a conflict would safely abort the sync process, without
+   * rollbacking the synced items).
+  */
+  abstract itemsNewerThan(date: Date | undefined, limit: number): Promise<CollectionItem[]> | CollectionItem[];
 
   /**
   * Gets the highest `updateAt` date in the collection.

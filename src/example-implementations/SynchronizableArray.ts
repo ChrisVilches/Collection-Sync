@@ -3,6 +3,7 @@ import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
 import DocId from "../types/DocId";
 import CollectionSyncMetadata from "../CollectionSyncMetadata";
+import * as R from "ramda";
 
 class SynchronizableArray extends SynchronizableCollection{
   private array: CollectionItem[];
@@ -20,12 +21,14 @@ class SynchronizableArray extends SynchronizableCollection{
     return this.array.length;
   }
 
-  itemsNewerThan(date: Date | undefined): CollectionItem[]{
+  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[]{
     if(!date){
       return this.array;
     }
-    return this.array.sort((a: CollectionItem, b: CollectionItem) => (a.updatedAt as any) - (b.updatedAt as any))
-                     .filter(item => date < item.updatedAt);
+    let filteredArray = this.array.sort((a: CollectionItem, b: CollectionItem) => (a.updatedAt as any) - (b.updatedAt as any))
+                                  .filter(item => date < item.updatedAt);
+
+    return R.take(limit, filteredArray);
   }
 
   private findById(id: DocId): CollectionItem | undefined{

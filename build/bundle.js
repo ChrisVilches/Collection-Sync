@@ -67,6 +67,9 @@ System.register("CollectionItem", [], function (exports_2, context_2) {
         execute: function () {
             CollectionItem = (function () {
                 function CollectionItem(id, document, updatedAt) {
+                    if (!updatedAt) {
+                        throw new Error("Updated At must be defined");
+                    }
                     this._id = id;
                     this._document = document;
                     this._updatedAt = updatedAt;
@@ -244,9 +247,9 @@ System.register("exceptions/UpdateNewerItemError", [], function (exports_8, cont
         }
     };
 });
-System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "types/SyncTypes", "exceptions/UpdateNewerItemError", "Collection"], function (exports_9, context_9) {
+System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "types/SyncTypes", "exceptions/UpdateNewerItemError", "Collection", "ramda"], function (exports_9, context_9) {
     "use strict";
-    var ParentNotSetError_1, SyncTypes_2, UpdateNewerItemError_1, Collection_1, SynchronizableCollection;
+    var ParentNotSetError_1, SyncTypes_2, UpdateNewerItemError_1, Collection_1, R, SynchronizableCollection;
     var __moduleName = context_9 && context_9.id;
     return {
         setters: [
@@ -261,6 +264,9 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
             },
             function (Collection_1_1) {
                 Collection_1 = Collection_1_1;
+            },
+            function (R_1) {
+                R = R_1;
             }
         ],
         execute: function () {
@@ -307,7 +313,7 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                         });
                     });
                 };
-                SynchronizableCollection.prototype.itemsToFetch = function () {
+                SynchronizableCollection.prototype.itemsToFetch = function (limit) {
                     return __awaiter(this, void 0, void 0, function () {
                         var lastFetchAt;
                         return __generator(this, function (_a) {
@@ -315,12 +321,12 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                                 case 0: return [4, this.syncMetadata.getLastAt(SyncTypes_2.SyncOperation.Fetch)];
                                 case 1:
                                     lastFetchAt = _a.sent();
-                                    return [2, this._parent.itemsNewerThan(lastFetchAt)];
+                                    return [2, this._parent.itemsNewerThan(lastFetchAt, limit)];
                             }
                         });
                     });
                 };
-                SynchronizableCollection.prototype.itemsToPost = function () {
+                SynchronizableCollection.prototype.itemsToPost = function (limit) {
                     return __awaiter(this, void 0, void 0, function () {
                         var lastPostAt;
                         return __generator(this, function (_a) {
@@ -328,13 +334,13 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                                 case 0: return [4, this.syncMetadata.getLastAt(SyncTypes_2.SyncOperation.Post)];
                                 case 1:
                                     lastPostAt = _a.sent();
-                                    return [4, this.itemsNewerThan(lastPostAt)];
+                                    return [4, this.itemsNewerThan(lastPostAt, limit)];
                                 case 2: return [2, _a.sent()];
                             }
                         });
                     });
                 };
-                SynchronizableCollection.prototype.itemsToSync = function (syncOperation) {
+                SynchronizableCollection.prototype.itemsToSync = function (syncOperation, limit) {
                     return __awaiter(this, void 0, void 0, function () {
                         return __generator(this, function (_a) {
                             switch (_a.label) {
@@ -349,16 +355,16 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                                     }
                                     switch (syncOperation) {
                                         case SyncTypes_2.SyncOperation.Fetch:
-                                            return [2, this.itemsToFetch()];
+                                            return [2, this.itemsToFetch(limit)];
                                         case SyncTypes_2.SyncOperation.Post:
-                                            return [2, this.itemsToPost()];
+                                            return [2, this.itemsToPost(limit)];
                                     }
                                     return [2];
                             }
                         });
                     });
                 };
-                SynchronizableCollection.prototype.sync = function (syncOperation, options) {
+                SynchronizableCollection.prototype.sync = function (syncOperation, options, limit) {
                     if (options === void 0) { options = this.defaultSyncOptions; }
                     return __awaiter(this, void 0, void 0, function () {
                         var items;
@@ -367,7 +373,7 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                                 case 0:
                                     if (!this.needsSync(syncOperation))
                                         return [2];
-                                    return [4, this.itemsToSync(syncOperation)];
+                                    return [4, this.itemsToSync(syncOperation, limit)];
                                 case 1:
                                     items = _a.sent();
                                     _a.label = 2;
@@ -391,43 +397,71 @@ System.register("SynchronizableCollection", ["exceptions/ParentNotSetError", "ty
                 };
                 SynchronizableCollection.prototype.syncItems = function (items, syncOperation, options) {
                     return __awaiter(this, void 0, void 0, function () {
-                        var i, item, found, parent_1, upsertObject, conflict, force;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
+                        var parent, force, compareObjects, _a, _b, _c, _d, _e, _f, _g, upsertObject, cleanItems, conflictItem, lastIgnoredItem, i, objectToCompare, conflict, upsertedItems, lastUpsertedItem;
+                        return __generator(this, function (_h) {
+                            switch (_h.label) {
                                 case 0:
                                     this.lastSyncedItem = undefined;
-                                    i = 0;
-                                    _a.label = 1;
-                                case 1:
-                                    if (!(i < items.length)) return [3, 7];
-                                    item = items[i];
-                                    found = void 0;
-                                    parent_1 = this.parent;
-                                    if (!(syncOperation == SyncTypes_2.SyncOperation.Fetch)) return [3, 3];
-                                    return [4, this.findById(item.id)];
-                                case 2:
-                                    found = _a.sent();
-                                    return [3, 5];
-                                case 3: return [4, parent_1.findById(item.id)];
-                                case 4:
-                                    found = _a.sent();
-                                    _a.label = 5;
-                                case 5:
-                                    upsertObject = syncOperation == SyncTypes_2.SyncOperation.Fetch ? this : parent_1;
-                                    conflict = found && found.updatedAt > item.updatedAt;
+                                    parent = this.parent;
                                     force = options.conflictStrategy == SyncTypes_2.SyncConflictStrategy.Force;
-                                    if (force || !conflict) {
-                                        upsertObject.upsert(item);
+                                    compareObjects = {};
+                                    _a = syncOperation;
+                                    switch (_a) {
+                                        case SyncTypes_2.SyncOperation.Fetch: return [3, 1];
+                                        case SyncTypes_2.SyncOperation.Post: return [3, 3];
                                     }
-                                    else if (options.conflictStrategy == SyncTypes_2.SyncConflictStrategy.RaiseError) {
-                                        throw new UpdateNewerItemError_1.default(item.id);
+                                    return [3, 5];
+                                case 1:
+                                    _c = (_b = R).indexBy;
+                                    _d = [R.prop('id')];
+                                    return [4, this.findByIds(items.map(function (i) { return i.id; }))];
+                                case 2:
+                                    compareObjects = _c.apply(_b, _d.concat([_h.sent()]));
+                                    return [3, 5];
+                                case 3:
+                                    _f = (_e = R).indexBy;
+                                    _g = [R.prop('id')];
+                                    return [4, parent.findByIds(items.map(function (i) { return i.id; }))];
+                                case 4:
+                                    compareObjects = _f.apply(_e, _g.concat([_h.sent()]));
+                                    return [3, 5];
+                                case 5:
+                                    upsertObject = syncOperation == SyncTypes_2.SyncOperation.Fetch ? this : parent;
+                                    cleanItems = [];
+                                    conflictItem = undefined;
+                                    lastIgnoredItem = undefined;
+                                    for (i = 0; i < items.length; i++) {
+                                        objectToCompare = compareObjects[items[i].id];
+                                        conflict = (objectToCompare === null || objectToCompare === void 0 ? void 0 : objectToCompare.updatedAt) > items[i].updatedAt;
+                                        if (force || !conflict) {
+                                            cleanItems.push(items[i]);
+                                        }
+                                        else if (options.conflictStrategy == SyncTypes_2.SyncConflictStrategy.RaiseError) {
+                                            conflictItem = items[i];
+                                            break;
+                                        }
+                                        else if (options.conflictStrategy == SyncTypes_2.SyncConflictStrategy.Ignore) {
+                                            lastIgnoredItem = items[i];
+                                        }
                                     }
-                                    this.lastSyncedItem = item;
-                                    _a.label = 6;
+                                    upsertedItems = [];
+                                    if (!(cleanItems.length > 0)) return [3, 7];
+                                    return [4, upsertObject.upsertBatch(cleanItems)];
                                 case 6:
-                                    i++;
-                                    return [3, 1];
-                                case 7: return [2];
+                                    upsertedItems = _h.sent();
+                                    _h.label = 7;
+                                case 7:
+                                    lastUpsertedItem = upsertedItems[upsertedItems.length - 1];
+                                    this.lastSyncedItem = lastUpsertedItem;
+                                    if (lastIgnoredItem) {
+                                        if (!lastUpsertedItem || (lastIgnoredItem.updatedAt > lastUpsertedItem.updatedAt)) {
+                                            this.lastSyncedItem = lastIgnoredItem;
+                                        }
+                                    }
+                                    if (conflictItem) {
+                                        throw new UpdateNewerItemError_1.default(conflictItem.id);
+                                    }
+                                    return [2];
                             }
                         });
                     });
@@ -674,7 +708,7 @@ System.register("example-implementations/SynchronizableArray", ["SynchronizableC
                 SynchronizableArray.prototype.countAll = function () {
                     return this.array.length;
                 };
-                SynchronizableArray.prototype.itemsNewerThan = function (date) {
+                SynchronizableArray.prototype.itemsNewerThan = function (date, limit) {
                     if (!date) {
                         return this.array;
                     }
@@ -683,6 +717,16 @@ System.register("example-implementations/SynchronizableArray", ["SynchronizableC
                 };
                 SynchronizableArray.prototype.findById = function (id) {
                     return this.array.find(function (x) { return x.id == id; });
+                };
+                SynchronizableArray.prototype.findByIds = function (ids) {
+                    var idSet = new Set(ids);
+                    var result = [];
+                    for (var i = 0; i < this.array.length; i++) {
+                        if (idSet.has(this.array[i].id)) {
+                            result.push(this.array[i]);
+                        }
+                    }
+                    return result;
                 };
                 SynchronizableArray.prototype.upsert = function (item) {
                     var found = this.findById(item.id);
@@ -694,6 +738,9 @@ System.register("example-implementations/SynchronizableArray", ["SynchronizableC
                         this.array.push(item);
                         return item;
                     }
+                };
+                SynchronizableArray.prototype.upsertBatch = function (items) {
+                    return items.map(this.upsert.bind(this));
                 };
                 SynchronizableArray.prototype.latestUpdatedItem = function () {
                     if (this.array.length == 0)
@@ -777,16 +824,15 @@ System.register("example-implementations/SynchronizableNeDB", ["example-implemen
                         });
                     });
                 };
-                SynchronizableNeDB.prototype.findById = function (id) {
+                SynchronizableNeDB.prototype.findByIds = function (ids) {
                     var _this = this;
                     return new Promise(function (resolve, reject) {
                         var _a;
                         var _b;
-                        (_b = _this.db) === null || _b === void 0 ? void 0 : _b.findOne((_a = {}, _a[ID_ATTRIBUTE_NAME] = id, _a), function (err, doc) {
+                        (_b = _this.db) === null || _b === void 0 ? void 0 : _b.find((_a = {}, _a[ID_ATTRIBUTE_NAME] = { $in: ids }, _a), function (err, docs) {
                             if (err)
                                 return reject(err);
-                            doc = _this.makeItem(doc);
-                            resolve(doc);
+                            resolve(docs.map(_this.makeItem));
                         });
                     });
                 };
@@ -802,6 +848,30 @@ System.register("example-implementations/SynchronizableNeDB", ["example-implemen
                             if (err)
                                 return reject(err);
                             resolve(item);
+                        });
+                    });
+                };
+                SynchronizableNeDB.prototype.upsertBatch = function (items) {
+                    return __awaiter(this, void 0, void 0, function () {
+                        var result, i, upserted;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    result = [];
+                                    i = 0;
+                                    _a.label = 1;
+                                case 1:
+                                    if (!(i < items.length)) return [3, 4];
+                                    return [4, this.upsert(items[i])];
+                                case 2:
+                                    upserted = _a.sent();
+                                    result.push(upserted);
+                                    _a.label = 3;
+                                case 3:
+                                    i++;
+                                    return [3, 1];
+                                case 4: return [2, result];
+                            }
                         });
                     });
                 };

@@ -56,24 +56,18 @@ abstract class SynchronizableCollection extends Collection {
   //       (So that the items prior to the conflict are not synced again).
   //
   //       Code that checks this should be in the non-extendable part (not user defined classes).
-  private async itemsToFetch(): Promise<CollectionItem[]>{
+  private async itemsToFetch(limit: number): Promise<CollectionItem[]>{
     const lastFetchAt = await this.syncMetadata.getLastAt(SyncOperation.Fetch);
-    return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt);
+    return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt, limit);
   }
 
-  private async itemsToPost(): Promise<CollectionItem[]>{
+  private async itemsToPost(limit: number): Promise<CollectionItem[]>{
     const lastPostAt = await this.syncMetadata.getLastAt(SyncOperation.Post);
-    return await this.itemsNewerThan(lastPostAt);
+    return await this.itemsNewerThan(lastPostAt, limit);
   }
 
   // TODO: Should be private?
-  // TODO: Note that this comment will be invisible for users implementing this class.
-  //       Users need to pay attention to this warning when implementing a Collection.
-  /** Returns a list of items to sync. The list MUST be ordered by updatedAt ASC.
-   * Failing to provide an `order by updatedAt ASC` list will corrupt in case
-   * of conflict error (if it's ordered, a conflict would safely abort the sync process).
-  */
-  async itemsToSync(syncOperation: SyncOperation): Promise<CollectionItem[]>{
+  async itemsToSync(syncOperation: SyncOperation, limit: number): Promise<CollectionItem[]>{
     if(!this._parent){
       throw new ParentNotSetError("Cannot sync to parent");
     }
@@ -84,15 +78,19 @@ abstract class SynchronizableCollection extends Collection {
 
     switch(syncOperation){
       case SyncOperation.Fetch:
-        return this.itemsToFetch();
+        return this.itemsToFetch(limit);
       case SyncOperation.Post:
-        return this.itemsToPost();
+        return this.itemsToPost(limit);
     }
   }
 
-  async sync(syncOperation: SyncOperation, options: SyncOptions = this.defaultSyncOptions){
+  async sync(syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions){
+    if(limit < 1){
+      throw new Error("Limit must be a positive integer");
+    }
+
     if(!this.needsSync(syncOperation)) return;
-    const items: CollectionItem[] = await this.itemsToSync(syncOperation);
+    const items: CollectionItem[] = await this.itemsToSync(syncOperation, limit);
 
     try {
       await this.syncItems(items, syncOperation, options);

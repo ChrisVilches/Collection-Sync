@@ -35,11 +35,11 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  itemsNewerThan(date: Date | undefined): Promise<CollectionItem[]>{
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<CollectionItem[]>{
     const where = !date ? {} : { updatedAt: { $gt: date } };
 
     return new Promise((resolve, reject) => {
-      this.db?.find(where).sort({ updatedAt: 1 }).exec((err, docs) => {
+      this.db?.find(where).sort({ updatedAt: 1 }).limit(limit).exec((err, docs) => {
         if(err) return reject(err);
         docs = docs.map(this.makeItem);
         resolve(docs);
