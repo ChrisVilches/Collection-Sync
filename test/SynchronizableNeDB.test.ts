@@ -6,7 +6,6 @@ import PersonItem from "../src/example-implementations/PersonItem";
 import DocId from "../src/types/DocId";
 import { SyncOperation } from "../src/types/SyncTypes";
 import { SyncConflictStrategy } from "../src/types/SyncTypes";
-import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata";
 import JsonFileSyncMetadata from "../src/example-implementations/JsonFileSyncMetadata";
 
 function makeItem(id: DocId, date: string): PersonItem{
@@ -57,6 +56,11 @@ const initializeMock = async () => {
 
 describe("SynchronizableArray", () => {
   beforeEach(initializeMock);
+  afterAll(() => {
+    // NOTE: Name of JSON file is hard-coded inside the class.
+    //       This is because the class is mostly for testing purposes (it's not even optimized).
+    require("child_process").execSync("rm ./tmp/*data_sync_*.json");
+  });
 
   test(".array (initial constructor)", async () => {
     expect(await slave.countAll()).toEqual(0);
