@@ -31,7 +31,7 @@ import { SyncOperation, SyncConflictStrategy } from "collection-sync";
 import DocId from "collection-sync/dist/types/DocId";
 ```
 
-Create a class that extends `CollectionItem`, and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
+Create a class that extends [CollectionItem](/docs/classes/CollectionItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
 
 If we use Mongo's `_id`, when synchronizing from one database to another it might be impossible to set it, since some database engines auto generate the `_id` value, hence you must choose how to identify documents using a custom way.
 
@@ -208,7 +208,13 @@ When a conflict is encountered, a suggestion is to ask the user to manually sele
 
 ## Limitations
 
-Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` methods to 'SynchronizableCollection' have been proposed.
+### Locking mechanism
+
+Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to 'SynchronizableCollection' have been proposed.
+
+### Handling conflicts
+
+Some applications may require a more granular control over conflicts. For now, a mechanism in which all conflicting records are not updated (i.e. they are skipped) but instead are stored in a cache has been proposed. With this approach, the user can deal with the conflicts in a future moment, or perhaps keep both versions of the record.
 
 ## Develop
 
