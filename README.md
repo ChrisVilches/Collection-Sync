@@ -222,7 +222,7 @@ This would make it possible to also synchronize files to services like Amazon S3
 
 ### Rollback and commit
 
-Currently rollback and commit statements are not supported, and there's no plan to implement them.
+Rollback and commit statements are currently not supported.
 
 ## Develop
 

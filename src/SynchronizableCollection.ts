@@ -151,6 +151,22 @@ abstract class SynchronizableCollection extends Collection {
       }
     }
 
+    // TODO: (Improvement) Make a "commit" abstract method. It's executed during the sync lifecycle (at the end).
+    //       The method will depend on implementation, but some users might want to have such a feature to only
+    //       commit changes when this method is executed (users define their own code).
+    //       If this is implemented, then also implement pre-commit and post-commit hooks.
+    //
+    //       Commit should also return a value (which is finally mapped to either success or fail).
+    //
+    //       Note that if the data is not yet committed, it means it's stored in some kind of temporary datastore,
+    //       which means it needs to be cleaned up somehow. This is why hooks like "finally/cleanup" and initialization (pre-upsert is probably ok
+    //       but consider renaming it to make it more generic) would be useful.
+    //
+    //       At any rate, all of this is implemented by the user, so if their DB engines don't support all this stuff, they just leave the methods blank.
+    //       And I don't really have to implement them, but it'd be useful to test that it works all OK (proof of concept).
+    //
+    //       Also, since the code would get really complex with all of these improvements, it'd be cool to create some kind of diagram to summarize everything.
+
     let upsertedItems: CollectionItem[] = [];
 
     if(cleanItems.length > 0){
@@ -158,6 +174,9 @@ abstract class SynchronizableCollection extends Collection {
         // TODO: (Improvement) Pre-sync hook (as arguments, give them some info like the items to sync, etc).
         upsertedItems = await upsertObject.upsertBatch(cleanItems);
         // TODO: (Improvement) Post-sync hook.
+        //
+        //       Note that hooks should prevent further execution if they signal or return some value.
+        //       For example, in RoR it happens when a filter returns false.
       } catch(e){
         // TODO: (Improvement) Even after this error, it'd be great to know the status of the sync.
         //       This feature is commented below as well. Maybe it'd be necessary to return something
