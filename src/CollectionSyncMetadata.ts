@@ -5,12 +5,9 @@ abstract class CollectionSyncMetadata implements IInitializable{
   abstract setLastFetchAt(d : Date): void;
   abstract setLastPostAt(d : Date): void;
 
-  abstract getLastFetchAt(): Promise<Date> | Date | undefined;
-  abstract getLastPostAt(): Promise<Date> | Date | undefined;
+  abstract getLastFetchAt(): Promise<Date | undefined> | Date | undefined;
+  abstract getLastPostAt(): Promise<Date | undefined> | Date | undefined;
 
-  // TODO: From the point of view of the user who is executing this method,
-  //       he probably wants to know what the method does, not what to implement (fix wording).
-  /** Implement any async logic to load database, create connection, etc. */
   abstract initialize(): Promise<void>;
 
   async setLastAt(d : Date, syncOperation: SyncOperation){

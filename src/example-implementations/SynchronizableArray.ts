@@ -21,7 +21,7 @@ class SynchronizableArray extends SynchronizableCollection{
   }
 
   itemsNewerThan(date: Date | undefined): CollectionItem[]{
-    if(date == undefined){
+    if(!date){
       return this.array;
     }
     return this.array.sort((a: CollectionItem, b: CollectionItem) => (a.updatedAt as any) - (b.updatedAt as any))

@@ -7,6 +7,7 @@ import DocId from "../src/types/DocId";
 import { SyncOperation } from "../src/types/SyncTypes";
 import { SyncConflictStrategy } from "../src/types/SyncTypes";
 import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata";
+import JsonFileSyncMetadata from "../src/example-implementations/JsonFileSyncMetadata";
 
 function makeItem(id: DocId, date: string): PersonItem{
   return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
@@ -25,11 +26,12 @@ let collectionManyItems: SynchronizableCollection;
 
 // TODO: This function is a bit verbose. Try to simplify it.
 const initializeMock = async () => {
-  const syncMetadata = new BasicSyncMetadata(new Date("2020/02/01"), new Date("2001/02/01"));
+  const syncMetadata = new JsonFileSyncMetadata("./tmp/", new Date("2020/02/01"), new Date("2001/02/01"));
   slave = new SynchronizableNeDB(syncMetadata);
   master = new SynchronizableNeDB();
   collectionManyItems = new SynchronizableNeDB();
 
+  await syncMetadata.initialize();
   await slave.initialize();
   await master.initialize();
   await collectionManyItems.initialize();

@@ -22,7 +22,7 @@ class SynchronizableNeDB extends SynchronizableCollection{
 
   /** Creates a CollectionItem object starting from a document. It extracts its `ID`, `updatedAt`, and document data to create the object. */
   makeItem(doc: any): PersonItem | undefined{
-    if(doc == undefined) return undefined;
+    if(!doc) return undefined;
     return new PersonItem(doc[ID_ATTRIBUTE_NAME], doc, doc.updatedAt);
   }
 
@@ -36,12 +36,7 @@ class SynchronizableNeDB extends SynchronizableCollection{
   }
 
   itemsNewerThan(date: Date | undefined): Promise<CollectionItem[]>{
-    let where: object;
-    if(date == undefined){
-      where = {};
-    }
-
-    where = { updatedAt: { $gt: date } };
+    const where = !date ? {} : { updatedAt: { $gt: date } };
 
     return new Promise((resolve, reject) => {
       this.db?.find(where).sort({ updatedAt: 1 }).exec((err, docs) => {

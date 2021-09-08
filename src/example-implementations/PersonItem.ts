@@ -1,6 +1,7 @@
 import CollectionItem from "../CollectionItem";
 import DocId from "../types/DocId";
 
+/** Person document schema. */
 interface Person{
   name: string;
   age: number;

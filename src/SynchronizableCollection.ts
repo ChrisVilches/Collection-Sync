@@ -72,7 +72,7 @@ abstract class SynchronizableCollection extends Collection {
    * of conflict error (if it's ordered, a conflict would safely abort the sync process).
   */
   async itemsToSync(syncOperation: SyncOperation): Promise<CollectionItem[]>{
-    if(this._parent == undefined){
+    if(!this._parent){
       throw new ParentNotSetError("Cannot sync to parent");
     }
 
@@ -96,7 +96,7 @@ abstract class SynchronizableCollection extends Collection {
       await this.syncItems(items, syncOperation, options);
     } finally {
       if(this.lastSyncedItem){
-        this.syncMetadata.setLastAt(this.lastSyncedItem.updatedAt, syncOperation);
+        await this.syncMetadata.setLastAt(this.lastSyncedItem.updatedAt, syncOperation);
       }
     }
   }

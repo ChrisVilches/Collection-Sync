@@ -30,6 +30,7 @@ const initializeMock = async () => {
   master = new SynchronizableArray();
   collectionManyItems = new SynchronizableArray();
 
+  await syncMetadata.initialize();
   await slave.initialize();
   await master.initialize();
   await collectionManyItems.initialize();

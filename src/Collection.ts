@@ -5,9 +5,6 @@ import IInitializable from "./IInitializable";
 abstract class Collection implements IInitializable{
   abstract countAll(): Promise<number> | number;
 
-  // TODO: From the point of view of the user who is executing this method,
-  //       he probably wants to know what the method does, not what to implement (fix wording).
-  /** Implement any async logic to load database, create connection, etc. */
   abstract initialize(): Promise<void>;
 
   // TODO: This should be optimized to be batch-first (and also the syncing algorithms).
