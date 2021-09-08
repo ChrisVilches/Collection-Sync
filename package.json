@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon",
     "test": "jest",
+    "test:watch": "jest --watchAll",
     "build": "tsc"
   },
   "author": "",

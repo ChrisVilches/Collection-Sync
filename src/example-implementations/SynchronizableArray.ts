@@ -32,7 +32,7 @@ class SynchronizableArray extends SynchronizableCollection{
     return this.array.find((x: CollectionItem) => x.id == id);
   }
 
-  upsert(item: CollectionItem){
+  private upsert(item: CollectionItem){
     const found: CollectionItem | undefined = this.findById(item.id);
     if(found){
       found.update(item.document, item.updatedAt);
@@ -41,6 +41,10 @@ class SynchronizableArray extends SynchronizableCollection{
       this.array.push(item);
       return item;
     }
+  }
+
+  upsertBatch(items: CollectionItem[]): CollectionItem[]{
+    return items.map(this.upsert.bind(this));
   }
 
   latestUpdatedItem(): CollectionItem | undefined{

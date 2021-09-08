@@ -34,11 +34,9 @@ const initializeMock = async () => {
   await slave.initialize();
   await master.initialize();
   await collectionManyItems.initialize();
-  
-  for(let i=0; i<personItems.length; i++){
-    await master.upsert(personItems[i]);
-  }
-  
+
+  master.upsertBatch(personItems);
+
   slave.parent = master;
 
   const manyItems = [
@@ -53,9 +51,7 @@ const initializeMock = async () => {
     makeItem(9, "2022/11/01")
   ];
 
-  for(let i=0; i<manyItems.length; i++){
-    await collectionManyItems.upsert(manyItems[i]);
-  }
+  await collectionManyItems.upsertBatch(manyItems);
 };
 
 describe("SynchronizableArray", () => {
@@ -94,7 +90,7 @@ describe("SynchronizableArray", () => {
   });
 
   test(".sync (fetch) with conflict", async () => {
-    await slave.upsert(makeItem("marisel34", "2028/06/01"));
+    await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
     expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
 
     let err: any;
@@ -109,7 +105,7 @@ describe("SynchronizableArray", () => {
   });
 
   test(".sync (fetch) with conflict (use parent data)", async () => {
-    await slave.upsert(makeItem("marisel34", "2028/06/01"));
+    await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
     expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
     await slave.sync(SyncOperation.Fetch, { conflictStrategy: SyncConflictStrategy.Force });
 
@@ -118,7 +114,7 @@ describe("SynchronizableArray", () => {
   });
 
   test(".sync (fetch) with conflict (use ignore strategy)", async () => {
-    await slave.upsert(makeItem("marisel34", "2028/06/01"));
+    await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
     expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
     await slave.sync(SyncOperation.Fetch, { conflictStrategy: SyncConflictStrategy.Ignore });
     expect((await slave.findById("marisel34"))?.updatedAt).toEqual(new Date("2028/06/01"));
@@ -126,20 +122,20 @@ describe("SynchronizableArray", () => {
 
   test(".needsSync (post)", async () => {
     expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
-    await slave.upsert(makeItem(123, "2026/01/01"));
+    await slave.upsertBatch([makeItem(123, "2026/01/01")]);
     expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
   });
 
   test(".sync (post)", async () => {
     expect(await slave.countAll()).toEqual(0);
     expect(await master.countAll()).toEqual(2);
-    await slave.upsert(makeItem(1231, "2026/01/01"));
+    await slave.upsertBatch([makeItem(1231, "2026/01/01")]);
     expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
     await slave.sync(SyncOperation.Post);
     expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
     expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2026/01/01"));
 
-    await slave.upsert(makeItem(1232, "2027/01/01"));
+    await slave.upsertBatch([makeItem(1232, "2027/01/01")]);
     expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
     await slave.sync(SyncOperation.Post);
     expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
@@ -151,7 +147,7 @@ describe("SynchronizableArray", () => {
   test(".sync (post) corrupted updatedAt does not get posted", async () => {
     expect(await slave.countAll()).toEqual(0);
     expect(await master.countAll()).toEqual(2);
-    await slave.upsert(makeItem(123, "1995/01/01"));
+    await slave.upsertBatch([makeItem(123, "1995/01/01")]);
     expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
     await slave.sync(SyncOperation.Post);
     expect(await slave.countAll()).toEqual(1);
@@ -159,11 +155,13 @@ describe("SynchronizableArray", () => {
   });
 
   test(".sync (post) with conflict", async () => {
-    await slave.upsert(makeItem(121, "2025/02/01"));
-    await slave.upsert(makeItem(122, "2025/03/01"));
-    await slave.upsert(makeItem(123, "2025/04/01"));
-    await slave.upsert(makeItem(124, "2025/05/01"));
-    await master.upsert(makeItem(123, "2026/01/01"));
+    await slave.upsertBatch([
+      makeItem(121, "2025/02/01"),
+      makeItem(122, "2025/03/01"),
+      makeItem(123, "2025/04/01"),
+      makeItem(124, "2025/05/01")
+    ]);
+    await master.upsertBatch([makeItem(123, "2026/01/01")]);
     expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
 
     await expect(async () => { await slave.sync(SyncOperation.Post) })
@@ -174,25 +172,27 @@ describe("SynchronizableArray", () => {
   });
 
   test(".sync (post) with conflict (use slave data)", async () => {
-    await slave.upsert(makeItem(123, "2025/01/01"));
-    await master.upsert(makeItem(123, "2035/01/01"));
+    await slave.upsertBatch([makeItem(123, "2025/01/01")]);
+    await master.upsertBatch([makeItem(123, "2035/01/01")]);
     await slave.sync(SyncOperation.Post, { conflictStrategy: SyncConflictStrategy.Force });
     expect((await slave.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
     expect((await master.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
   });
 
   test(".sync (post) with conflict (use ignore strategy)", async () => {
-    await slave.upsert(makeItem(123, "2025/01/01"));
-    await master.upsert(makeItem(123, "2026/01/01"));
+    await slave.upsertBatch([makeItem(123, "2025/01/01")]);
+    await master.upsertBatch([makeItem(123, "2026/01/01")]);
     await slave.sync(SyncOperation.Post, { conflictStrategy: SyncConflictStrategy.Ignore });
     // NOTE: latest post date is updated even if one is ignored.
     expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2025/01/01"));
   });
 
   test(".sync (post) with conflict (use ignore strategy)", async () => {
-    await slave.upsert(makeItem(123, "2025/01/01"));
-    await slave.upsert(makeItem(124, "2028/01/01"));
-    await master.upsert(makeItem(123, "2026/01/01"));
+    await slave.upsertBatch([
+      makeItem(123, "2025/01/01"),
+      makeItem(124, "2028/01/01")
+    ]);
+    await master.upsertBatch([makeItem(123, "2026/01/01")]);
     await slave.sync(SyncOperation.Post, { conflictStrategy: SyncConflictStrategy.Ignore });
     expect((await slave.findById(123))?.updatedAt).toEqual(new Date("2025/01/01"));
     expect((await master.findById(123))?.updatedAt).toEqual(new Date("2026/01/01"));

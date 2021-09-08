@@ -120,7 +120,7 @@ abstract class SynchronizableCollection extends Collection {
       const force = options.conflictStrategy == SyncConflictStrategy.Force;
 
       if(force || !conflict){
-        upsertObject.upsert(item);
+        upsertObject.upsertBatch([item]);
       } else if(options.conflictStrategy == SyncConflictStrategy.RaiseError) {
         throw new UpdateNewerItemError(item.id);
       }

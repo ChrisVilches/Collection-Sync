@@ -57,13 +57,13 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  upsert(item: CollectionItem): Promise<CollectionItem>{
+  private upsert(item: CollectionItem): Promise<CollectionItem>{
     return new Promise((resolve, reject) => {
       // These two modifications are to comply with the sync logic.
       // (1) ID is not generated automatically (must be kept across databases), therefore use custom one (some DBs auto-generate it).
       //     It must be the same to make syncing possible.
       // (2) Store custom updatedAt (if the DB engine allows modifying it, then that can be used as well,
-      //     but NeDB generated updatedAt and sets the value automatically, so this example was made
+      //     but NeDB generates updatedAt and sets the value automatically, so this example was made
       //     with a custom updatedAt added to the document).
       item.document[ID_ATTRIBUTE_NAME] = item.id;
       item.document.updatedAt = item.updatedAt;
@@ -74,6 +74,15 @@ class SynchronizableNeDB extends SynchronizableCollection{
         resolve(item);
       });
     });
+  }
+
+  async upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]>{
+    const result = [];
+    for(let i=0; i<items.length; i++){
+      const upserted = await this.upsert(items[i]);
+      result.push(upserted);
+    }
+    return result;
   }
 
   latestUpdatedItem(): Promise<CollectionItem | undefined>{

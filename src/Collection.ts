@@ -10,7 +10,7 @@ abstract class Collection implements IInitializable{
   // TODO: This should be optimized to be batch-first (and also the syncing algorithms).
   abstract findById(id: DocId): Promise<CollectionItem> | CollectionItem | undefined;
 
-  abstract upsert(item: CollectionItem): Promise<CollectionItem> | CollectionItem;
+  abstract upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]> | CollectionItem[];
 
   abstract itemsNewerThan(date: Date | undefined): Promise<CollectionItem[]> | CollectionItem[];
 
