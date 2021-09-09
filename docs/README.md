@@ -2,7 +2,7 @@ collection-sync / [Exports](modules.md)
 
 # Collection Sync
 
-Javascript Library for database synchronization between local and server. Customizable and completely database agnostic.
+Javascript Library for bi-directional database synchronization between multiple devices or servers. Customizable and completely database agnostic.
 
 See [Documentation](/docs/modules.md).
 
@@ -26,14 +26,14 @@ Make sure your project is using TypeScript.
 Import dependencies:
 
 ```ts
-import { CollectionItem } from "collection-sync";
+import { SyncItem } from "collection-sync";
 import { SynchronizableCollection } from "collection-sync";
 import { CollectionSyncMetadata } from "collection-sync";
 import { SyncOperation, SyncConflictStrategy } from "collection-sync";
 import DocId from "collection-sync/dist/types/DocId";
 ```
 
-Create a class that extends [CollectionItem](/docs/classes/CollectionItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
+Create a class that extends [SyncItem](/docs/classes/SyncItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
 
 If we use Mongo's `_id`, when synchronizing from one database to another it might be impossible to set it, since some database engines auto generate the `_id` value, hence you must choose how to identify documents using a custom way.
 
@@ -42,7 +42,7 @@ The same applies for `updatedAt`. If your database engine automatically sets `up
 Synchronization will fail if you try to set the ID and/or `updatedAt` but your database refuses to leave you set a specific value.
 
 ```ts
-class CustomItem extends CollectionItem {
+class CustomItem extends SyncItem {
   constructor(doc: any /* e.g. Mongo Document */){
     super(doc.documentId, doc, doc.updatedAt);
   }
@@ -60,7 +60,7 @@ class LocalCollection extends SynchronizableCollection {
   initialize(): Promise<void> {
     // Executes async logic to initialize collection or datastore (open file, create database connection, etc).
   }
-  findByIds(ids: DocId[]): CollectionItem[] | Promise<CollectionItem[]> {
+  findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
     const docs = [
       { /* Doc from DB */ },
       { /* Doc from DB */ },
@@ -68,15 +68,15 @@ class LocalCollection extends SynchronizableCollection {
     ];
     return docs.map(d => new CustomItem(d)); // Convert to CustomItem.
   }
-  upsertBatch(items: CollectionItem[]): CollectionItem[] | Promise<CollectionItem[]> {
-    // Implement batch upsert of records.
+  syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]> {
+    // Implement batch upsert/delete of records.
   }
-  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[] | Promise<CollectionItem[]> {
+  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]> {
     // Returns a list of items that have updatedAt greater than argument provided.
     // The list MUST be ordered by updatedAt ASC, otherwise an exception will be
     // thrown (no syncing will be executed).
   }
-  latestUpdatedItem(): CollectionItem | Promise<CollectionItem | undefined> | undefined {
+  latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined {
     // Gets the highest updateAt date in the collection.
   }
 }
@@ -86,7 +86,7 @@ All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
 
-In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
+In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (syncBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
 
 If both collections are inside a private/secure network, then connecting directly to another database would be fine.
 
@@ -100,16 +100,16 @@ class RemoteCollection extends SynchronizableCollection {
   initialize(): Promise<void> {
     // ...
   }
-  findByIds(ids: DocId[]): CollectionItem[] | Promise<CollectionItem[]> {
+  findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  upsertBatch(items: CollectionItem[]): CollectionItem[] | Promise<CollectionItem[]> {
+  syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[] | Promise<CollectionItem[]> {
+  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  latestUpdatedItem(): CollectionItem | Promise<CollectionItem | undefined> | undefined {
+  latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined {
     // ...
   }
 }
@@ -218,13 +218,48 @@ Some applications may require a more granular control over conflicts. For now, a
 
 ### Sync lifecycle hooks
 
-In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion of record, etc.
+In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion/deletion of record, etc.
 
 This would make it possible to also synchronize files to services like Amazon S3 (Simple Storage Service), since files in the local app might be stored in disk along with a local database that keeps track of them. In this situation, the user may create a custom code which executes right before the record syncing, and which uploads the file itself. Without custom code being inserted in the middle of the lifecycle it'd be inconvenient to implement this feature.
 
 ### Rollback and commit
 
 Rollback and commit statements are currently not supported. They might be implemented in the future as abstract methods and inserted somewhere in the sync lifecycle, but the implementation of the commit/rollback ultimately depends on the user.
+
+### Deletion
+
+Deleting records from a collection isn't supported yet. Since a collection can be fetched by a slave, the deleted records won't be fetched, and the slave cannot tell which records were deleted.
+
+Solutions:
+
+**Soft deletions:** The easiest solution is to store a `deleted` (boolean) flag in each record to mark it as deleted. This flag will be synced just like any other attribute in your record. Create an index on `deleted` to speed up queries.
+
+**Tracking deletions:** This solution involves having a collection that stores events, therefore a "deletion event" is stored whenever a record is deleted, and when the collections are synced, the device must execute those events to modify its data. This solution is the only one that works well when data from the database absolutely needs to be removed (due to how legacy systems work, etc). If your application logic allows restoring deleted records, use soft deletions instead.
+
+A way to implement this is by having your master (parent) collection's API return something like this when querying records that need to be synced:
+
+```json
+[
+  {
+    "action": "update",
+    "document": { "id": 15915, "name": "Christopher", "age": 29, "createdAt": "..." }
+  },
+  {
+    "action": "update",
+    "document": { "id": 93847, "name": "Mary", "age": 27, "createdAt": "..." }
+  }
+  {
+    "action": "delete",
+    "document": { "id": 1199234, "deletedAt": "..." }
+  }
+]
+```
+
+In this implementation, the master device must keep track of which items have been deleted, and arrange the output of the API endpoint so it contains records that have to be updated, and records that have to be deleted when syncing (by querying the deletion history collection).
+
+Then process all items by first checking the `action` value. If the value is `update`, then copy the document to the local database. If the action is `delete`, delete it from the local database (and optionally, if you plan to have slaves attached to it, keep track of which records were deleted as well, so it can also provide the list to its slave devices when syncing with them).
+
+A similar set of solutions is discussed in this article: https://www.datasyncbook.com/content/handling-deletions/
 
 ## Develop
 

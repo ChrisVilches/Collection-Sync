@@ -38,8 +38,8 @@
 - [latestUpdatedItem](SynchronizableCollection.md#latestupdateditem)
 - [needsSync](SynchronizableCollection.md#needssync)
 - [sync](SynchronizableCollection.md#sync)
+- [syncBatch](SynchronizableCollection.md#syncbatch)
 - [syncItems](SynchronizableCollection.md#syncitems)
-- [upsertBatch](SynchronizableCollection.md#upsertbatch)
 
 ## Constructors
 
@@ -59,7 +59,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L24)
+[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L24)
 
 ## Properties
 
@@ -69,7 +69,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L17)
+[SynchronizableCollection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L17)
 
 ___
 
@@ -79,19 +79,19 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L13)
+[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L13)
 
 ___
 
 ### lastSyncedItem
 
-• `Private` `Optional` **lastSyncedItem**: [`CollectionItem`](CollectionItem.md)
+• `Private` `Optional` **lastSyncedItem**: [`SyncItem`](SyncItem.md)
 
 Used to keep state of sync process.
 
 #### Defined in
 
-[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L20)
+[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L20)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L22)
+[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L22)
 
 ## Accessors
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L33)
+[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L33)
 
 • `set` **parent**(`p`): `void`
 
@@ -131,7 +131,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L29)
+[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L29)
 
 ## Methods
 
@@ -143,7 +143,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `items` | [`CollectionItem`](CollectionItem.md)[] |
+| `items` | [`SyncItem`](SyncItem.md)[] |
 
 #### Returns
 
@@ -151,7 +151,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:97](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L97)
+[SynchronizableCollection.ts:97](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L97)
 
 ___
 
@@ -171,13 +171,13 @@ Gets the number of items in the collection.
 
 #### Defined in
 
-[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L7)
+[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L9)
 
 ___
 
 ### findByIds
 
-▸ `Abstract` **findByIds**(`ids`): [`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+▸ `Abstract` **findByIds**(`ids`): [`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 Returns a list of records using an ID list as search query.
 
@@ -189,7 +189,7 @@ Returns a list of records using an ID list as search query.
 
 #### Returns
 
-[`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+[`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Inherited from
 
@@ -197,7 +197,7 @@ Returns a list of records using an ID list as search query.
 
 #### Defined in
 
-[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L12)
+[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L14)
 
 ___
 
@@ -217,13 +217,13 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L9)
+[Collection.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L11)
 
 ___
 
 ### itemsNewerThan
 
-▸ `Abstract` **itemsNewerThan**(`date`, `limit`): [`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+▸ `Abstract` **itemsNewerThan**(`date`, `limit`): [`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 Returns a list of items that have `updatedAt` greater than argument provided.
 The list MUST be ordered by `updatedAt ASC`, otherwise an exception will be thrown (no syncing
@@ -238,7 +238,7 @@ will be executed).
 
 #### Returns
 
-[`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+[`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Inherited from
 
@@ -246,13 +246,13 @@ will be executed).
 
 #### Defined in
 
-[Collection.ts:23](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L23)
+[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L25)
 
 ___
 
 ### itemsToFetch
 
-▸ `Private` **itemsToFetch**(`limit`): `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+▸ `Private` **itemsToFetch**(`limit`): `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Parameters
 
@@ -262,17 +262,17 @@ ___
 
 #### Returns
 
-`Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+`Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Defined in
 
-[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L52)
+[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L52)
 
 ___
 
 ### itemsToPost
 
-▸ `Private` **itemsToPost**(`limit`): `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+▸ `Private` **itemsToPost**(`limit`): `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Parameters
 
@@ -282,17 +282,17 @@ ___
 
 #### Returns
 
-`Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+`Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Defined in
 
-[SynchronizableCollection.ts:57](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L57)
+[SynchronizableCollection.ts:57](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L57)
 
 ___
 
 ### itemsToSync
 
-▸ **itemsToSync**(`syncOperation`, `limit`): `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+▸ **itemsToSync**(`syncOperation`, `limit`): `Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 Gets list of items that can be synced (to either fetch or post).
 
@@ -305,23 +305,23 @@ Gets list of items that can be synced (to either fetch or post).
 
 #### Returns
 
-`Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+`Promise`<[`SyncItem`](SyncItem.md)[]\>
 
 #### Defined in
 
-[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L63)
+[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L63)
 
 ___
 
 ### latestUpdatedItem
 
-▸ `Abstract` **latestUpdatedItem**(): `undefined` \| [`CollectionItem`](CollectionItem.md) \| `Promise`<`undefined` \| [`CollectionItem`](CollectionItem.md)\>
+▸ `Abstract` **latestUpdatedItem**(): `undefined` \| [`SyncItem`](SyncItem.md) \| `Promise`<`undefined` \| [`SyncItem`](SyncItem.md)\>
 
 Gets the highest `updateAt` date in the collection.
 
 #### Returns
 
-`undefined` \| [`CollectionItem`](CollectionItem.md) \| `Promise`<`undefined` \| [`CollectionItem`](CollectionItem.md)\>
+`undefined` \| [`SyncItem`](SyncItem.md) \| `Promise`<`undefined` \| [`SyncItem`](SyncItem.md)\>
 
 #### Inherited from
 
@@ -329,7 +329,7 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[Collection.ts:28](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L28)
+[Collection.ts:30](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L30)
 
 ___
 
@@ -349,7 +349,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:37](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L37)
+[SynchronizableCollection.ts:37](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L37)
 
 ___
 
@@ -371,7 +371,33 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:80](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L80)
+[SynchronizableCollection.ts:80](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L80)
+
+___
+
+### syncBatch
+
+▸ `Abstract` **syncBatch**(`items`): [`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
+
+Syncs (upsert/delete) a batch (list) of items into this collection.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `items` | [`SyncItem`](SyncItem.md)[] |
+
+#### Returns
+
+[`SyncItem`](SyncItem.md)[] \| `Promise`<[`SyncItem`](SyncItem.md)[]\>
+
+#### Inherited from
+
+[Collection](Collection.md).[syncBatch](Collection.md#syncbatch)
+
+#### Defined in
+
+[Collection.ts:19](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/Collection.ts#L19)
 
 ___
 
@@ -383,7 +409,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `items` | [`CollectionItem`](CollectionItem.md)[] |
+| `items` | [`SyncItem`](SyncItem.md)[] |
 | `syncOperation` | [`SyncOperation`](../enums/SyncOperation.md) |
 | `options` | `SyncOptions` |
 
@@ -393,30 +419,4 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:109](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/SynchronizableCollection.ts#L109)
-
-___
-
-### upsertBatch
-
-▸ `Abstract` **upsertBatch**(`items`): [`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
-
-Upserts a batch (list) of items into this collection.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `items` | [`CollectionItem`](CollectionItem.md)[] |
-
-#### Returns
-
-[`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
-
-#### Inherited from
-
-[Collection](Collection.md).[upsertBatch](Collection.md#upsertbatch)
-
-#### Defined in
-
-[Collection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L17)
+[SynchronizableCollection.ts:109](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/SynchronizableCollection.ts#L109)
