@@ -60,8 +60,8 @@ const executeAllTests = (options: TestExecutionArgument) => {
     await master.initialize();
     await collectionManyItems.initialize();
 
-    await master.upsertBatch(personItems);
-    await collectionManyItems.upsertBatch(manyItems);
+    await master.syncBatch(personItems);
+    await collectionManyItems.syncBatch(manyItems);
   };
 
   describe("SynchronizableArray", () => {
@@ -95,7 +95,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (fetch) with conflict", async () => {
-      await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
 
       let err: any;
@@ -110,7 +110,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (fetch) with conflict (use parent data)", async () => {
-      await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
       await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Force });
 
@@ -119,7 +119,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (fetch) with conflict (use ignore strategy)", async () => {
-      await slave.upsertBatch([makeItem("marisel34", "2028/06/01")]);
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
       await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
       expect((await slave.findByIds(["marisel34"]))[0]?.updatedAt).toEqual(new Date("2028/06/01"));
@@ -127,20 +127,20 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
     test(".needsSync (post)", async () => {
       expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
-      await slave.upsertBatch([makeItem(123, "2026/01/01")]);
+      await slave.syncBatch([makeItem(123, "2026/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
     });
 
     test(".sync (post)", async () => {
       expect(await slave.countAll()).toEqual(0);
       expect(await master.countAll()).toEqual(2);
-      await slave.upsertBatch([makeItem(1231, "2026/01/01")]);
+      await slave.syncBatch([makeItem(1231, "2026/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
       await slave.sync(SyncOperation.Post, 100);
       expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2026/01/01"));
 
-      await slave.upsertBatch([makeItem(1232, "2027/01/01")]);
+      await slave.syncBatch([makeItem(1232, "2027/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
       await slave.sync(SyncOperation.Post, 100);
       expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
@@ -152,7 +152,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     test(".sync (post) corrupted updatedAt does not get posted", async () => {
       expect(await slave.countAll()).toEqual(0);
       expect(await master.countAll()).toEqual(2);
-      await slave.upsertBatch([makeItem(123, "1995/01/01")]);
+      await slave.syncBatch([makeItem(123, "1995/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeFalsy();
       await slave.sync(SyncOperation.Post, 100);
       expect(await slave.countAll()).toEqual(1);
@@ -160,13 +160,13 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (post) with conflict", async () => {
-      await slave.upsertBatch([
+      await slave.syncBatch([
         makeItem(121, "2025/02/01"),
         makeItem(122, "2025/03/01"),
         makeItem(123, "2025/04/01"),
         makeItem(124, "2025/05/01")
       ]);
-      await master.upsertBatch([makeItem(123, "2026/01/01")]);
+      await master.syncBatch([makeItem(123, "2026/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
 
       await expect(async () => { await slave.sync(SyncOperation.Post, 100) })
@@ -177,27 +177,27 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (post) with conflict (use slave data)", async () => {
-      slave.upsertBatch([makeItem(123, "2025/01/01")]);
-      master.upsertBatch([makeItem(123, "2026/01/01")]);
+      slave.syncBatch([makeItem(123, "2025/01/01")]);
+      master.syncBatch([makeItem(123, "2026/01/01")]);
       await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Force });
       expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
       expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
     });
 
     test(".sync (post) with conflict (use ignore strategy)", async () => {
-      slave.upsertBatch([makeItem(123, "2025/01/01")]);
-      master.upsertBatch([makeItem(123, "2026/01/01")]);
+      slave.syncBatch([makeItem(123, "2025/01/01")]);
+      master.syncBatch([makeItem(123, "2026/01/01")]);
       await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
       // NOTE: latest post date is updated even if one is ignored.
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2025/01/01"));
     });
 
     test(".sync (post) with conflict (use ignore strategy)", async () => {
-      slave.upsertBatch([
+      slave.syncBatch([
         makeItem(123, "2025/01/01"),
         makeItem(124, "2028/01/01")
       ]);
-      master.upsertBatch([makeItem(123, "2026/01/01")]);
+      master.syncBatch([makeItem(123, "2026/01/01")]);
       await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
       expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
       expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2026/01/01"));

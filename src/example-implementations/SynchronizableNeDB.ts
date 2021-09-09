@@ -1,4 +1,4 @@
-import CollectionItem from "../CollectionItem";
+import SyncItem from "../SyncItem";
 import PersonItem from "./PersonItem";
 import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
@@ -20,7 +20,7 @@ class SynchronizableNeDB extends SynchronizableCollection{
     this.db = new NeDB({ timestampData: false }); // Add timestamp data manually.
   }
 
-  /** Creates a CollectionItem object starting from a document. It extracts its `ID`, `updatedAt`, and document data to create the object. */
+  /** Creates a SyncItem object starting from a document. It extracts its `ID`, `updatedAt`, and document data to create the object. */
   makeItem(doc: any): PersonItem | undefined{
     if(!doc) return undefined;
     return new PersonItem(doc[ID_ATTRIBUTE_NAME], doc, doc.updatedAt);
@@ -35,7 +35,7 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number): Promise<CollectionItem[]>{
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]>{
     const where = !date ? {} : { updatedAt: { $gt: date } };
 
     return new Promise((resolve, reject) => {
@@ -47,7 +47,7 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  findByIds(ids: DocId[]): Promise<CollectionItem[]>{
+  findByIds(ids: DocId[]): Promise<SyncItem[]>{
     return new Promise((resolve, reject) => {
       this.db?.find({ [ID_ATTRIBUTE_NAME]: { $in: ids }}, (err: any, docs: any) => {
         if(err) return reject(err);
@@ -56,41 +56,55 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  private upsert(item: CollectionItem): Promise<CollectionItem>{
+  private executeSyncItem(item: SyncItem): Promise<SyncItem>{
     return new Promise((resolve, reject) => {
-      // These two modifications are to comply with the sync logic.
-      // (1) ID is not generated automatically (must be kept across databases), therefore use custom one (some DBs auto-generate it).
-      //     It must be the same to make syncing possible.
-      // (2) Store custom updatedAt (if the DB engine allows modifying it, then that can be used as well,
-      //     but NeDB generates updatedAt and sets the value automatically, so this example was made
-      //     with a custom updatedAt added to the document).
-      item.document[ID_ATTRIBUTE_NAME] = item.id;
-      item.document.updatedAt = item.updatedAt;
-      delete item.document._id; // Avoid "You cannot change a document's _id" error (NeDB specific).
-
-      this.db?.update({ [ID_ATTRIBUTE_NAME]: item.id }, item.document, { upsert: true }, (err, _numReplaced, _upsert) => {
-        if(err) return reject(err);
-        resolve(item);
-      });
+      if(item.isDelete){
+        // TODO: Behavior is untested.
+        // Deletion not supported yet.
+      } else {
+        // These two modifications are to comply with the sync logic.
+        // (1) ID is not generated automatically (must be kept across databases), therefore use custom one (some DBs auto-generate it).
+        //     It must be the same to make syncing possible.
+        // (2) Store custom updatedAt (if the DB engine allows modifying it, then that can be used as well,
+        //     but NeDB generates updatedAt and sets the value automatically, so this example was made
+        //     with a custom updatedAt added to the document).
+        item.document[ID_ATTRIBUTE_NAME] = item.id;
+        item.document.updatedAt = item.updatedAt;
+        delete item.document._id; // Avoid "You cannot change a document's _id" error (NeDB specific).
+  
+        this.db?.update({ [ID_ATTRIBUTE_NAME]: item.id }, item.document, { upsert: true }, (err, _numReplaced, _upsert) => {
+          if(err) return reject(err);
+          resolve(item);
+        });
+      }
     });
   }
 
-  async upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]>{
+  async syncBatch(items: SyncItem[]): Promise<SyncItem[]>{
     const result = [];
     for(let i=0; i<items.length; i++){
-      const upserted = await this.upsert(items[i]);
-      result.push(upserted);
+      const synced = await this.executeSyncItem(items[i]);
+      result.push(synced);
     }
     return result;
   }
 
-  latestUpdatedItem(): Promise<CollectionItem | undefined>{
+  latestUpdatedItem(): Promise<SyncItem | undefined>{
     return new Promise((resolve, reject) => {
       this.db?.find({}).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
         if(err) return reject(err);
         resolve(this.makeItem(docs[0]));
       });
     });
+  }
+
+  commitSync(): boolean {
+    return true;
+  }
+  async rollbackSync(): Promise<void> {
+  }
+
+  async cleanUp(): Promise<void> {
   }
 }
 

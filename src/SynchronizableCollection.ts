@@ -1,4 +1,4 @@
-import CollectionItem from "./CollectionItem";
+import SyncItem from "./SyncItem";
 import ParentNotSetError from "./exceptions/ParentNotSetError";
 import { SyncOptions, SyncConflictStrategy, SyncOperation } from "./types/SyncTypes";
 import DocId from "./types/DocId";
@@ -9,7 +9,7 @@ import * as R from "ramda";
 
 // TODO: Many methods in this class could be private.
 
-abstract class SynchronizableCollection extends Collection {
+abstract class SynchronizableCollection implements Collection {
   protected readonly defaultSyncOptions: SyncOptions = {
     conflictStrategy: SyncConflictStrategy.RaiseError
   };
@@ -17,13 +17,33 @@ abstract class SynchronizableCollection extends Collection {
   private _parent?: SynchronizableCollection;
 
   /** Used to keep state of sync process. */
-  private lastSyncedItem?: CollectionItem;
+  private lastSyncedItem?: SyncItem;
 
   public syncMetadata: CollectionSyncMetadata;
 
   constructor(syncMetadata: CollectionSyncMetadata){
-    super();
     this.syncMetadata = syncMetadata;
+  }
+
+  abstract countAll(): number | Promise<number>;
+  abstract findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]>;
+  abstract syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]>;
+  abstract itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]>;
+  abstract latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined;
+  abstract initialize(): Promise<void>;
+
+  /** Commits the sync operation. Database engines that don't support this should implement a method that
+   * returns `true` (because the data was already added without the need for a commit statement). */
+  abstract commitSync(): Promise<boolean> | boolean;
+
+  // TODO: This method should be allowed to access data about how the sync went.
+  /** Rollbacks the current data that's being synchronized. */
+  rollbackSync(): Promise<void> | void{
+  }
+
+  // TODO: This method should be allowed to access data about how the sync went.
+  /** Executed at the end of each sync operation (whether it succeeded or not). */
+  cleanUp(): Promise<void> | void{
   }
 
   set parent(p: SynchronizableCollection | undefined){
@@ -49,18 +69,18 @@ abstract class SynchronizableCollection extends Collection {
     return lastAt < latestUpdatedItem.updatedAt;
   }
 
-  private async itemsToFetch(limit: number): Promise<CollectionItem[]>{
+  private async itemsToFetch(limit: number): Promise<SyncItem[]>{
     const lastFetchAt = await this.syncMetadata.getLastAt(SyncOperation.Fetch);
     return (this._parent as SynchronizableCollection).itemsNewerThan(lastFetchAt, limit);
   }
 
-  private async itemsToPost(limit: number): Promise<CollectionItem[]>{
+  private async itemsToPost(limit: number): Promise<SyncItem[]>{
     const lastPostAt = await this.syncMetadata.getLastAt(SyncOperation.Post);
     return await this.itemsNewerThan(lastPostAt, limit);
   }
 
   /** Gets list of items that can be synced (to either fetch or post). */
-  async itemsToSync(syncOperation: SyncOperation, limit: number): Promise<CollectionItem[]>{
+  async itemsToSync(syncOperation: SyncOperation, limit: number): Promise<SyncItem[]>{
     if(!this._parent){
       throw new ParentNotSetError("Cannot sync to parent");
     }
@@ -83,20 +103,35 @@ abstract class SynchronizableCollection extends Collection {
     }
 
     if(!this.needsSync(syncOperation)) return;
-    const items: CollectionItem[] = await this.itemsToSync(syncOperation, limit);
+    const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
+
+    let committed = false;
 
     try {
       await this.syncItems(items, syncOperation, options);
+      committed = await this.commitSync();
     } finally {
-      if(this.lastSyncedItem){
+      // By default rollback operation is triggered if it wasn't committed by the
+      // end of the lifecycle (i.e. if commit returned false or .syncItems raised error).
+      // TODO: WRONG!?!??! note that conflict exception would also execute a rollback.
+      //       This probably shouldn't happen.
+      //       However, we might want to change it so that all exceptions (including conflict)
+      //       does a rollback = doesn't update lastSyncAt = has to do everything again.
+      if(!committed){
+        await this.rollbackSync();
+      }
+
+      if(committed && this.lastSyncedItem){
         await this.syncMetadata.setLastAt(this.lastSyncedItem.updatedAt, syncOperation);
       }
+
+      await this.cleanUp();
     }
   }
 
-  private areItemsSorted(items: CollectionItem[]): boolean{
+  private areItemsSorted(items: SyncItem[]): boolean{
     if(items.length < 2) return true;
-    let curr: CollectionItem = items[0];
+    let curr: SyncItem = items[0];
 
     for(let i=1; i<items.length; i++){
       if(curr.updatedAt > items[i].updatedAt) return false;
@@ -106,7 +141,8 @@ abstract class SynchronizableCollection extends Collection {
     return true;
   }
 
-  async syncItems(items: CollectionItem[], syncOperation: SyncOperation, options: SyncOptions): Promise<void>{
+  // TODO: Simplify or split method into sub methods.
+  async syncItems(items: SyncItem[], syncOperation: SyncOperation, options: SyncOptions): Promise<void>{
     if(!this.areItemsSorted(items)){
       throw new Error("Items to sync are not ordered correctly (order must be updatedAt ASC)");
     }
@@ -115,7 +151,7 @@ abstract class SynchronizableCollection extends Collection {
     const parent: SynchronizableCollection = this.parent as SynchronizableCollection;
     const force = options.conflictStrategy == SyncConflictStrategy.Force;
 
-    let compareObjects: {[key: DocId]: CollectionItem} = {};
+    let compareObjects: {[key in DocId]: SyncItem} = {};
 
     switch(syncOperation){
       case SyncOperation.Fetch:
@@ -126,14 +162,14 @@ abstract class SynchronizableCollection extends Collection {
         break;
     }
 
-    // Decide which object will have .upsertBatch executed on.
+    // Decide which object will have .syncBatch executed on.
     const upsertObject: SynchronizableCollection = syncOperation == SyncOperation.Fetch ? this : parent;
 
-    const cleanItems: CollectionItem[] = [];
+    const cleanItems: SyncItem[] = [];
 
-    let conflictItem: CollectionItem | undefined = undefined;
+    let conflictItem: SyncItem | undefined = undefined;
 
-    let lastIgnoredItem: CollectionItem | undefined = undefined;
+    let lastIgnoredItem: SyncItem | undefined = undefined;
 
     for(let i=0; i<items.length; i++){
       const objectToCompare = compareObjects[items[i].id];
@@ -179,12 +215,12 @@ abstract class SynchronizableCollection extends Collection {
     //
     //       Also, since the code would get really complex with all of these improvements, it'd be cool to create some kind of diagram to summarize everything.
 
-    let upsertedItems: CollectionItem[] = [];
+    let upsertedItems: SyncItem[] = [];
 
     if(cleanItems.length > 0){
       try {
         // TODO: (Improvement) Pre-sync hook (as arguments, give them some info like the items to sync, etc).
-        upsertedItems = await upsertObject.upsertBatch(cleanItems);
+        upsertedItems = await upsertObject.syncBatch(cleanItems);
         // TODO: (Improvement) Post-sync hook.
         //
         //       Note that hooks should prevent further execution if they signal or return some value.
@@ -195,23 +231,24 @@ abstract class SynchronizableCollection extends Collection {
         //       like a "sync status object" (create interface) which contains all data, including if
         //       there's an error. In fact, the error object could be inside that status object as well.
         //       If the database engine used doesn't return the upserted count, then allow undefined for that number.
-        throw new Error("Upsert batch operation failed");
+
+        // It's necessary to unset this variable so that the next sync is done from scratch again.
+        // syncBatch isn't necessarily sorted by updatedAt, this is because sometimes the sync operation would need to split
+        // the "delete" and "update" actions into two lists, and execute them individually.
+        // Only for the conflict exception it's safe to leave the progress (without having to redo it) because the safe to sync item list
+        // and the existence of a conflict were determined beforehand.
+        this.lastSyncedItem = undefined; // TODO: Test.
+        throw new Error("Sync (upsert/delete) batch operation failed");
       }
     }
 
     // Get last object. Set it after the upsert has completed without errors.
     // Otherwise, if upsert failed, the value would be set (and therefore set the last sync date
     // using that object, even if it failed).
-    let lastUpsertedItem: CollectionItem | undefined = upsertedItems[upsertedItems.length - 1];
-    this.lastSyncedItem = lastUpsertedItem;
-
-    // However, if one item was ignored (using ignore policy), and if that one is the latest one
-    // in the batch, then use that one to set the last sync date.
-    if(lastIgnoredItem){
-      if(!lastUpsertedItem || (lastIgnoredItem.updatedAt > lastUpsertedItem.updatedAt)){
-        this.lastSyncedItem = lastIgnoredItem;
-      }
-    }
+    this.lastSyncedItem = (
+      // In case there was an ignored item, add it to the array to compute last sync date.
+      lastIgnoredItem ? upsertedItems.concat([lastIgnoredItem]) : upsertedItems
+    ).concat().sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt))[0];
 
     // TODO: (Improvement) make it possible to get the status of the sync operation.
     //       This means that even if an error occurred, be able to fetch which records were synced, which

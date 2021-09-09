@@ -24,14 +24,14 @@ Make sure your project is using TypeScript.
 Import dependencies:
 
 ```ts
-import { CollectionItem } from "collection-sync";
+import { SyncItem } from "collection-sync";
 import { SynchronizableCollection } from "collection-sync";
 import { CollectionSyncMetadata } from "collection-sync";
 import { SyncOperation, SyncConflictStrategy } from "collection-sync";
 import DocId from "collection-sync/dist/types/DocId";
 ```
 
-Create a class that extends [CollectionItem](/docs/classes/CollectionItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
+Create a class that extends [SyncItem](/docs/classes/SyncItem.md), and populates its data starting from a document from your database. You must customize the way to extract the ID and date it was last updated.
 
 If we use Mongo's `_id`, when synchronizing from one database to another it might be impossible to set it, since some database engines auto generate the `_id` value, hence you must choose how to identify documents using a custom way.
 
@@ -40,7 +40,7 @@ The same applies for `updatedAt`. If your database engine automatically sets `up
 Synchronization will fail if you try to set the ID and/or `updatedAt` but your database refuses to leave you set a specific value.
 
 ```ts
-class CustomItem extends CollectionItem {
+class CustomItem extends SyncItem {
   constructor(doc: any /* e.g. Mongo Document */){
     super(doc.documentId, doc, doc.updatedAt);
   }
@@ -58,7 +58,7 @@ class LocalCollection extends SynchronizableCollection {
   initialize(): Promise<void> {
     // Executes async logic to initialize collection or datastore (open file, create database connection, etc).
   }
-  findByIds(ids: DocId[]): CollectionItem[] | Promise<CollectionItem[]> {
+  findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
     const docs = [
       { /* Doc from DB */ },
       { /* Doc from DB */ },
@@ -66,15 +66,15 @@ class LocalCollection extends SynchronizableCollection {
     ];
     return docs.map(d => new CustomItem(d)); // Convert to CustomItem.
   }
-  upsertBatch(items: CollectionItem[]): CollectionItem[] | Promise<CollectionItem[]> {
-    // Implement batch upsert of records.
+  syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]> {
+    // Implement batch upsert/delete of records.
   }
-  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[] | Promise<CollectionItem[]> {
+  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]> {
     // Returns a list of items that have updatedAt greater than argument provided.
     // The list MUST be ordered by updatedAt ASC, otherwise an exception will be
     // thrown (no syncing will be executed).
   }
-  latestUpdatedItem(): CollectionItem | Promise<CollectionItem | undefined> | undefined {
+  latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined {
     // Gets the highest updateAt date in the collection.
   }
 }
@@ -84,7 +84,7 @@ All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
 
-In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (upsertBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
+In cases where the local collection is a database in a mobile app, you don't want to connect directly to a remote database, but instead you'd have to prepare a backend API to connect to, which provides the operations needed (syncBatch, findByIds, etc). This class must work as a communication layer between the client and that API.
 
 If both collections are inside a private/secure network, then connecting directly to another database would be fine.
 
@@ -98,16 +98,16 @@ class RemoteCollection extends SynchronizableCollection {
   initialize(): Promise<void> {
     // ...
   }
-  findByIds(ids: DocId[]): CollectionItem[] | Promise<CollectionItem[]> {
+  findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  upsertBatch(items: CollectionItem[]): CollectionItem[] | Promise<CollectionItem[]> {
+  syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[] | Promise<CollectionItem[]> {
+  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]> {
     // ...
   }
-  latestUpdatedItem(): CollectionItem | Promise<CollectionItem | undefined> | undefined {
+  latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined {
     // ...
   }
 }
@@ -216,7 +216,7 @@ Some applications may require a more granular control over conflicts. For now, a
 
 ### Sync lifecycle hooks
 
-In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion of record, etc.
+In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion/deletion of record, etc.
 
 This would make it possible to also synchronize files to services like Amazon S3 (Simple Storage Service), since files in the local app might be stored in disk along with a local database that keeps track of them. In this situation, the user may create a custom code which executes right before the record syncing, and which uploads the file itself. Without custom code being inserted in the middle of the lifecycle it'd be inconvenient to implement this feature.
 

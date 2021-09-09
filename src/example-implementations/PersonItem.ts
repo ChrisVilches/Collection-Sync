@@ -1,4 +1,4 @@
-import CollectionItem from "../CollectionItem";
+import SyncItem from "../SyncItem";
 import DocId from "../types/DocId";
 
 /** Person document schema. */
@@ -7,7 +7,7 @@ interface Person{
   age: number;
 }
 
-class PersonItem extends CollectionItem {
+class PersonItem extends SyncItem {
   constructor(id: DocId, person: Person, updatedAt: Date){
     super(id, person, updatedAt);
   }

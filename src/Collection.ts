@@ -1,33 +1,33 @@
-import CollectionItem from "./CollectionItem";
+import SyncItem from "./SyncItem";
 import DocId from "./types/DocId";
 import IInitializable from "./IInitializable";
 
-// TODO: Maybe it'd be better to change it to interface.
-//       This way, users can use "implements" in their models.
-abstract class Collection implements IInitializable{
+// TODO: One thing to keep in mind is that if there are multiple users synchronizing, then commit and rollback
+//       must affect the data of only that sync process. This should be implemented by the user (in the slave and master
+//       collection, implementation is ad-hoc). But it'd be great to comment it.
+interface Collection extends IInitializable{
   /** Gets the number of items in the collection. */
-  abstract countAll(): Promise<number> | number;
-
-  abstract initialize(): Promise<void>;
+  countAll(): Promise<number> | number;
 
   /** Returns a list of records using an ID list as search query. */
-  abstract findByIds(ids: DocId[]): Promise<CollectionItem[]> | CollectionItem[];
+  findByIds(ids: DocId[]): Promise<SyncItem[]> | SyncItem[];
 
   /**
-   * Upserts a batch (list) of items into this collection.
+   * Syncs (upsert/delete) a batch (list) of items into this collection.
+   * Order of document processing doesn't need to be in any particular order.
    */
-  abstract upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]> | CollectionItem[];
+  syncBatch(items: SyncItem[]): Promise<SyncItem[]> | SyncItem[];
 
   /** Returns a list of items that have `updatedAt` greater than argument provided.
    * The list MUST be ordered by `updatedAt ASC`, otherwise an exception will be thrown (no syncing
    * will be executed).
   */
-  abstract itemsNewerThan(date: Date | undefined, limit: number): Promise<CollectionItem[]> | CollectionItem[];
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]> | SyncItem[];
 
   /**
   * Gets the highest `updateAt` date in the collection.
   */
-  abstract latestUpdatedItem(): Promise<CollectionItem | undefined> | CollectionItem | undefined;
+  latestUpdatedItem(): Promise<SyncItem | undefined> | SyncItem | undefined;
 }
 
 export default Collection;

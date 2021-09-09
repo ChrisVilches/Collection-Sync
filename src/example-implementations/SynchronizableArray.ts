@@ -1,4 +1,4 @@
-import CollectionItem from "../CollectionItem";
+import SyncItem from "../SyncItem";
 import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
 import DocId from "../types/DocId";
@@ -6,7 +6,7 @@ import CollectionSyncMetadata from "../CollectionSyncMetadata";
 import * as R from "ramda";
 
 class SynchronizableArray extends SynchronizableCollection{
-  private array: CollectionItem[];
+  private array: SyncItem[];
 
   constructor(syncMetadata: CollectionSyncMetadata = new BasicSyncMetadata()){
     super(syncMetadata);
@@ -21,23 +21,23 @@ class SynchronizableArray extends SynchronizableCollection{
     return this.array.length;
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number): CollectionItem[]{
+  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[]{
     if(!date){
       return this.array;
     }
-    let filteredArray = this.array.sort((a: CollectionItem, b: CollectionItem) => (a.updatedAt as any) - (b.updatedAt as any))
+    let filteredArray = this.array.sort((a: SyncItem, b: SyncItem) => (a.updatedAt as any) - (b.updatedAt as any))
                                   .filter(item => date < item.updatedAt);
 
     return R.take(limit, filteredArray);
   }
 
-  private findById(id: DocId): CollectionItem | undefined{
-    return this.array.find((x: CollectionItem) => x.id == id);
+  private findById(id: DocId): SyncItem | undefined{
+    return this.array.find((x: SyncItem) => x.id == id);
   }
 
-  findByIds(ids: DocId[]): CollectionItem[]{
+  findByIds(ids: DocId[]): SyncItem[]{
     const idSet = new Set(ids);
-    const result: CollectionItem[] = [];
+    const result: SyncItem[] = [];
     for(let i=0; i<this.array.length; i++){
       if(idSet.has(this.array[i].id)){
         result.push(this.array[i]);
@@ -46,8 +46,8 @@ class SynchronizableArray extends SynchronizableCollection{
     return result;
   }
 
-  private upsert(item: CollectionItem){
-    const found: CollectionItem | undefined = this.findById(item.id);
+  private upsert(item: SyncItem){
+    const found: SyncItem | undefined = this.findById(item.id);
     if(found){
       found.update(item.document, item.updatedAt);
       return found;
@@ -57,11 +57,11 @@ class SynchronizableArray extends SynchronizableCollection{
     }
   }
 
-  upsertBatch(items: CollectionItem[]): CollectionItem[]{
+  syncBatch(items: SyncItem[]): SyncItem[]{
     return items.map(this.upsert.bind(this));
   }
 
-  latestUpdatedItem(): CollectionItem | undefined{
+  latestUpdatedItem(): SyncItem | undefined{
     if(this.array.length == 0) return undefined;
 
     let latest = this.array[0];
@@ -74,6 +74,15 @@ class SynchronizableArray extends SynchronizableCollection{
     }
 
     return latest;
+  }
+
+  commitSync(): boolean {
+    return true;
+  }
+  rollbackSync(): void {
+  }
+
+  cleanUp(): void {
   }
 }
 
