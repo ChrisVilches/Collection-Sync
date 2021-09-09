@@ -137,7 +137,19 @@ abstract class SynchronizableCollection extends Collection {
 
     for(let i=0; i<items.length; i++){
       const objectToCompare = compareObjects[items[i].id];
-      const conflict = objectToCompare?.updatedAt > items[i].updatedAt;
+
+      // TODO: This lastSync was already fetched somewhere in the sync process. Reuse that value instead of fetching it again.
+      const lastSync: Date | undefined = await this.syncMetadata.getLastAt(syncOperation);
+      const conflict = lastSync && objectToCompare?.updatedAt > lastSync;
+
+      // TODO: The line above used to be:
+      //       objectToCompare?.updatedAt > items[i].updatedAt;
+      //       However when changing it (fixed logic error) the tests don't throw anything. This means the test cases are poor.
+      //
+      //       The fix above was made because the previous logic was "your item is newer than mine", but instead it should be
+      //       "both items have been modified since the last time I synced", which is what that line does now (fixed, but untested).
+      //
+      //       Also new conflict strategies can be introduced, such as "Force if newer", "Raise error if older" or something like that.
 
       if(force || !conflict){
         cleanItems.push(items[i]);
