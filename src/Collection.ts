@@ -1,16 +1,19 @@
 import CollectionItem from "./CollectionItem";
 import DocId from "./types/DocId";
 import IInitializable from "./IInitializable";
-import * as R from "ramda";
 
 abstract class Collection implements IInitializable{
+  /** Gets the number of items in the collection. */
   abstract countAll(): Promise<number> | number;
 
   abstract initialize(): Promise<void>;
 
-  // TODO: Can be optimized so that it only returns a version that only has ID and updatedAt (omitting the document).
+  /** Returns a list of records using an ID list as search query. */
   abstract findByIds(ids: DocId[]): Promise<CollectionItem[]> | CollectionItem[];
 
+  /**
+   * Upserts a batch (list) of items into this collection.
+   */
   abstract upsertBatch(items: CollectionItem[]): Promise<CollectionItem[]> | CollectionItem[];
 
   /** Returns a list of items that have `updatedAt` greater than argument provided.

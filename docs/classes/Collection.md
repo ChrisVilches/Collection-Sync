@@ -39,19 +39,23 @@
 
 ▸ `Abstract` **countAll**(): `number` \| `Promise`<`number`\>
 
+Gets the number of items in the collection.
+
 #### Returns
 
 `number` \| `Promise`<`number`\>
 
 #### Defined in
 
-[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L7)
+[Collection.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L7)
 
 ___
 
 ### findByIds
 
 ▸ `Abstract` **findByIds**(`ids`): [`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+
+Returns a list of records using an ID list as search query.
 
 #### Parameters
 
@@ -65,7 +69,7 @@ ___
 
 #### Defined in
 
-[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L12)
+[Collection.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L12)
 
 ___
 
@@ -85,7 +89,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L9)
+[Collection.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L9)
 
 ___
 
@@ -110,7 +114,7 @@ will be executed).
 
 #### Defined in
 
-[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L20)
+[Collection.ts:23](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L23)
 
 ___
 
@@ -126,13 +130,15 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[Collection.ts:25](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L25)
+[Collection.ts:28](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L28)
 
 ___
 
 ### upsertBatch
 
 ▸ `Abstract` **upsertBatch**(`items`): [`CollectionItem`](CollectionItem.md)[] \| `Promise`<[`CollectionItem`](CollectionItem.md)[]\>
+
+Upserts a batch (list) of items into this collection.
 
 #### Parameters
 
@@ -146,4 +152,4 @@ ___
 
 #### Defined in
 
-[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/1677b22/src/Collection.ts#L14)
+[Collection.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/0e9ed4a/src/Collection.ts#L17)
