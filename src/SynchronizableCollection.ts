@@ -9,6 +9,8 @@ import * as R from "ramda";
 
 // TODO: Many methods in this class could be private.
 
+// TODO: Split class. Maybe implement a base class called something like "Synchronizer" or something that
+//       gathers only sync related methods.
 abstract class SynchronizableCollection implements Collection {
   protected readonly defaultSyncOptions: SyncOptions = {
     conflictStrategy: SyncConflictStrategy.RaiseError
@@ -34,7 +36,9 @@ abstract class SynchronizableCollection implements Collection {
 
   /** Commits the sync operation. Database engines that don't support this should implement a method that
    * returns `true` (because the data was already added without the need for a commit statement). */
-  abstract commitSync(): Promise<boolean> | boolean;
+  async commitSync(): Promise<boolean> {
+    return true;
+  };
 
   // TODO: This method should be allowed to access data about how the sync went.
   /** Rollbacks the current data that's being synchronized. */
@@ -105,10 +109,12 @@ abstract class SynchronizableCollection implements Collection {
     if(!this.needsSync(syncOperation)) return;
     const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
 
-    let committed = false;
+    let committed: boolean = false;
 
     try {
       await this.syncItems(items, syncOperation, options);
+
+      // TODO: Retry several times (just to make it safe).
       committed = await this.commitSync();
     } finally {
       // By default rollback operation is triggered if it wasn't committed by the
@@ -118,9 +124,53 @@ abstract class SynchronizableCollection implements Collection {
       //       However, we might want to change it so that all exceptions (including conflict)
       //       does a rollback = doesn't update lastSyncAt = has to do everything again.
       if(!committed){
+        // TODO: Retry several times (just to make it safe).
         await this.rollbackSync();
       }
 
+      // TODO: Adding the "committed" condition breaks the tests. Because the current specification
+      //       says that when a conflict arises, the data that was added before the conflict remains.
+      //       However what the new (not yet decided) specification described above says, is that when a conflict arises
+      //       committed = false, therefore doesn't update the lastSyncAt (breaking many tests).
+      //       The most robust way to implement this is by creating two ways that can be configured in the options:
+      //       (1) When a conflict is detected, don't commit, therefore don't update lastSyncAt, therefore have to do the entire process again.
+      //       (2) The current specification, just leave the data that was previously added, raise the exception, but also
+      //           do commit the data that was added (meaning that lastSyncAt does change).
+      //
+      //       In order to implement this, commit + rollback must be implemented (and they must work). Conflicts can be detected before
+      //       doing any modification in the database, so in that sense an actual rollback implementation is not needed, but if the syncing
+      //       fails and throws another kind of exception (system error, etc), then in that case it's necessary to actually rollback it.
+      //
+      //       This means that strategies for how to resolve problems would be divided in two:
+      //       (1) What to do when a conflict happens (this is checked beforehand).
+      //           a. Make it restart the sync from scratch (don't update lastSyncAt).
+      //           b. Keep the data that was added until the conflict (currently implemented). i.e. do commit + update lastSyncAt.
+      //       (2) What to do when an unexpected error happens (not checked beforehand).
+      //           a. Don't do anything (because it can't). Don't update lastSyncAt. And the reason is a bit complex:
+      //              The algorithm traverses all items, picks ones until it finds a conflict. While it's doing so, it selects
+      //              the latest (highest updatedAt) that's ignored (due to policy). Then, the lastSyncAt is selected using
+      //              a concatenation of syncedItems + [lastIgnoredItem]. The problem is that if the sync operation fails at the first
+      //              item, but the lastIgnoredItem has a higherItem, then even though the rest of the items weren't synced, the
+      //              lastIgnoredItem will be selected as highest (which has a higher updatedAt that many items that couldn't get synced
+      //              because of the error). This gets you a wrong lastSyncAt. Now, this won't happen, because if the sync process
+      //              throws and error, then the selection of lastSyncAt won't happen.
+      //              Bottomline, it's just better to tell the user to do it again.
+      //           b. Execute Rollback. Don't set lastSyncAt.
+
+      /*
+
+Specs for handling errors is distilled here.
++--------------------+--------------------------------------------------+---------------------------------------------+--------------------------------------------------------------+----------+
+|         .          | conflict (restart from scratch (config by user)) | conflict (keep added data (config by user)) | unexpected error (Whether supports or not commit + rollback) | No Error |
++--------------------+--------------------------------------------------+---------------------------------------------+--------------------------------------------------------------+----------+
+| update lastSyncAt  | No                                               | Yes                                         | No                                                           | Yes      |
+| Execute rollback   | No (premature end)                               | No (no need to)                             | Yes (but may have no effect if it's not supported)           | No       |
+| Execute commit     | No                                               | Yes                                         | No                                                           | Yes      |
+| Raise or set Error | Conflict Error class                             | Conflict Error class                        | UnexpectedError class                                        | None     |
++--------------------+--------------------------------------------------+---------------------------------------------+--------------------------------------------------------------+----------+
+
+
+      */
       if(committed && this.lastSyncedItem){
         await this.syncMetadata.setLastAt(this.lastSyncedItem.updatedAt, syncOperation);
       }
@@ -215,12 +265,12 @@ abstract class SynchronizableCollection implements Collection {
     //
     //       Also, since the code would get really complex with all of these improvements, it'd be cool to create some kind of diagram to summarize everything.
 
-    let upsertedItems: SyncItem[] = [];
+    let syncedItems: SyncItem[] = [];
 
     if(cleanItems.length > 0){
       try {
         // TODO: (Improvement) Pre-sync hook (as arguments, give them some info like the items to sync, etc).
-        upsertedItems = await upsertObject.syncBatch(cleanItems);
+        syncedItems = await upsertObject.syncBatch(cleanItems);
         // TODO: (Improvement) Post-sync hook.
         //
         //       Note that hooks should prevent further execution if they signal or return some value.
@@ -247,7 +297,7 @@ abstract class SynchronizableCollection implements Collection {
     // using that object, even if it failed).
     this.lastSyncedItem = (
       // In case there was an ignored item, add it to the array to compute last sync date.
-      lastIgnoredItem ? upsertedItems.concat([lastIgnoredItem]) : upsertedItems
+      lastIgnoredItem ? syncedItems.concat([lastIgnoredItem]) : syncedItems
     ).concat().sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt))[0];
 
     // TODO: (Improvement) make it possible to get the status of the sync operation.

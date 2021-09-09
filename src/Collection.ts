@@ -5,6 +5,10 @@ import IInitializable from "./IInitializable";
 // TODO: One thing to keep in mind is that if there are multiple users synchronizing, then commit and rollback
 //       must affect the data of only that sync process. This should be implemented by the user (in the slave and master
 //       collection, implementation is ad-hoc). But it'd be great to comment it.
+/**
+ * This interface defines several CRUD methods to operate on a collection.
+ * These methods can be implemented by accessing a local database, requesting a restful API (remote DB), etc.
+*/
 interface Collection extends IInitializable{
   /** Gets the number of items in the collection. */
   countAll(): Promise<number> | number;

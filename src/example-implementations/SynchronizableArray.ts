@@ -75,15 +75,6 @@ class SynchronizableArray extends SynchronizableCollection{
 
     return latest;
   }
-
-  commitSync(): boolean {
-    return true;
-  }
-  rollbackSync(): void {
-  }
-
-  cleanUp(): void {
-  }
 }
 
 export default SynchronizableArray;

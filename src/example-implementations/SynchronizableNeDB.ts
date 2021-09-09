@@ -97,15 +97,6 @@ class SynchronizableNeDB extends SynchronizableCollection{
       });
     });
   }
-
-  commitSync(): boolean {
-    return true;
-  }
-  async rollbackSync(): Promise<void> {
-  }
-
-  async cleanUp(): Promise<void> {
-  }
 }
 
 export default SynchronizableNeDB;
