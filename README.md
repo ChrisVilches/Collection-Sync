@@ -224,6 +224,16 @@ This would make it possible to also synchronize files to services like Amazon S3
 
 Rollback and commit statements are currently not supported. They might be implemented in the future as abstract methods and inserted somewhere in the sync lifecycle, but the implementation of the commit/rollback ultimately depends on the user.
 
+### Deletion
+
+Deleting records from a collection isn't supported yet. Since a collection can be fetched by a slave, the deleted records won't be fetched, and the slave cannot tell which records were deleted.
+
+The easiest solution is to store a `deleted` (boolean) flag in each record to mark it as deleted. This flag will be synced just like any other attribute in your record. Create an index on `deleted` to speed up queries.
+
+A different solution can be implemented by keeping a separate trash collection and syncing it between multiple devices. Implementation must be cautious though.
+
+Another solution involves having a collection that stores events, therefore a "deletion event" is stored whenever a record is deleted, and when the collections are synced, the device must execute those events to modify its data. However, conflicting event dates must be kept in mind when implementing a solution like this (considering multiple devices can delete/restore multiple times before syncing, therefore creating an intertwined mess of events when syncing them up). If you don't understand how syncing works in this library, don't implement this.
+
 ## Develop
 
 ```bash
