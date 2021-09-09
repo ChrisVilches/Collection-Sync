@@ -1,6 +1,6 @@
 # Collection Sync
 
-Javascript Library for database synchronization between local and server. Customizable and completely database agnostic.
+Javascript Library for bi-directional database synchronization between multiple devices or servers. Customizable and completely database agnostic.
 
 See [Documentation](/docs/modules.md).
 
@@ -228,11 +228,36 @@ Rollback and commit statements are currently not supported. They might be implem
 
 Deleting records from a collection isn't supported yet. Since a collection can be fetched by a slave, the deleted records won't be fetched, and the slave cannot tell which records were deleted.
 
-The easiest solution is to store a `deleted` (boolean) flag in each record to mark it as deleted. This flag will be synced just like any other attribute in your record. Create an index on `deleted` to speed up queries.
+Solutions:
 
-A different solution can be implemented by keeping a separate trash collection and syncing it between multiple devices. Implementation must be cautious though.
+**Soft deletions:** The easiest solution is to store a `deleted` (boolean) flag in each record to mark it as deleted. This flag will be synced just like any other attribute in your record. Create an index on `deleted` to speed up queries.
 
-Another solution involves having a collection that stores events, therefore a "deletion event" is stored whenever a record is deleted, and when the collections are synced, the device must execute those events to modify its data. However, conflicting event dates must be kept in mind when implementing a solution like this (considering multiple devices can delete/restore multiple times before syncing, therefore creating an intertwined mess of events when syncing them up). If you don't understand how syncing works in this library, don't implement this.
+**Tracking deletions:** This solution involves having a collection that stores events, therefore a "deletion event" is stored whenever a record is deleted, and when the collections are synced, the device must execute those events to modify its data. This solution is the only one that works well when data from the database absolutely needs to be removed (due to how legacy systems work, etc). If your application logic allows restoring deleted records, use soft deletions instead.
+
+A way to implement this is by having your master (parent) collection's API return something like this when querying records that need to be synced:
+
+```json
+[
+  {
+    "action": "update",
+    "document": { "id": 15915, "name": "Christopher", "age": 29, "createdAt": "..." }
+  },
+  {
+    "action": "update",
+    "document": { "id": 93847, "name": "Mary", "age": 27, "createdAt": "..." }
+  }
+  {
+    "action": "delete",
+    "document": { "id": 1199234, "deletedAt": "..." }
+  }
+]
+```
+
+In this implementation, the master device must keep track of which items have been deleted, and arrange the output of the API endpoint so it contains records that have to be updated, and records that have to be deleted when syncing (by querying the deletion history collection).
+
+Then process all items by first checking the `action` value. If the value is `update`, then copy the document to the local database. If the action is `delete`, delete it from the local database (and optionally, if you plan to have slaves attached to it, keep track of which records were deleted as well, so it can also provide the list to its slave devices when syncing with them).
+
+A similar set of solutions is discussed in this article: https://www.datasyncbook.com/content/handling-deletions/
 
 ## Develop
 
