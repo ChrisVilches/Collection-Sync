@@ -1,8 +1,6 @@
-# Lifecycle & hooks
+# Other specifications
 
-TODO
-
-# Handling errors during sync
+## Handling errors during sync
 
 Specifications for how errors are handled during a sync operation.
 

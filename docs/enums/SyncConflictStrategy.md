@@ -9,40 +9,55 @@
 - [Force](SyncConflictStrategy.md#force)
 - [Ignore](SyncConflictStrategy.md#ignore)
 - [RaiseError](SyncConflictStrategy.md#raiseerror)
+- [SyncUntilConflict](SyncConflictStrategy.md#syncuntilconflict)
 
 ## Enumeration members
 
 ### Force
 
-• **Force** = `0`
+• **Force** = `"Force"`
 
-Keep data from the side that initiated the sync.
+Force synchronizing by using the data from the source collection.
+Fetch will use the parent's data to update local data. Post will use
+data from the local collection and force it
+into the parent.
 
 #### Defined in
 
-[types/SyncTypes.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/types/SyncTypes.ts#L3)
+[types/SyncTypes.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/types/SyncTypes.ts#L8)
 
 ___
 
 ### Ignore
 
-• **Ignore** = `2`
+• **Ignore** = `"Ignore"`
 
-In order to fix conflicts correctly, at least one
-sync must not use ignore and throw error and select option.
+Ignore conflicting items (do nothing about them).
 
 #### Defined in
 
-[types/SyncTypes.ts:12](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/types/SyncTypes.ts#L12)
+[types/SyncTypes.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/types/SyncTypes.ts#L14)
 
 ___
 
 ### RaiseError
 
-• **RaiseError** = `1`
+• **RaiseError** = `"RaiseError"`
 
-Abort sync.
+Abort sync if there's a conflicting item in the item set to sync (i.e. sync all or none).
 
 #### Defined in
 
-[types/SyncTypes.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/types/SyncTypes.ts#L6)
+[types/SyncTypes.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/types/SyncTypes.ts#L11)
+
+___
+
+### SyncUntilConflict
+
+• **SyncUntilConflict** = `"SyncUntilConflict"`
+
+Syncs the items in order until there's a conflict.
+
+#### Defined in
+
+[types/SyncTypes.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/types/SyncTypes.ts#L17)

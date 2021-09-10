@@ -4,7 +4,6 @@ import BasicSyncMetadata from "./BasicSyncMetadata";
 import DocId from "../types/DocId";
 import CollectionSyncMetadata from "../CollectionSyncMetadata";
 import * as R from "ramda";
-import Synchronizer from "../Synchronizer";
 
 class SynchronizableArray extends SynchronizableCollection{
   private array: SyncItem[];
@@ -75,13 +74,6 @@ class SynchronizableArray extends SynchronizableCollection{
     }
 
     return latest;
-  }
-
-  preExecuteSync(_synchronizer: Synchronizer): boolean {
-    return true;
-  }
-  preCommitSync(_synchronizer: Synchronizer): boolean {
-    return true;
   }
 }
 

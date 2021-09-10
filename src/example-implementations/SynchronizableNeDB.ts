@@ -101,13 +101,6 @@ class SynchronizableNeDB extends SynchronizableCollection{
       });
     });
   }
-
-  preExecuteSync(_synchronizer: Synchronizer): boolean {
-    return true;
-  }
-  preCommitSync(_synchronizer: Synchronizer): boolean {
-    return true;
-  }
 }
 
 export default SynchronizableNeDB;

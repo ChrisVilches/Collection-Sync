@@ -12,11 +12,11 @@
 ### Classes
 
 - [BasicSyncMetadata](classes/BasicSyncMetadata.md)
-- [Collection](classes/Collection.md)
 - [CollectionSyncMetadata](classes/CollectionSyncMetadata.md)
 - [SyncItem](classes/SyncItem.md)
 - [SynchronizableCollection](classes/SynchronizableCollection.md)
 
 ### Interfaces
 
+- [Collection](interfaces/Collection.md)
 - [IInitializable](interfaces/IInitializable.md)

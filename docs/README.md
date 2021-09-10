@@ -210,56 +210,11 @@ When a conflict is encountered, a suggestion is to ask the user to manually sele
 
 ### Locking mechanism
 
-Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to 'SynchronizableCollection' have been proposed.
+Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to 'SynchronizableCollection' or `Collection` have been proposed.
 
-### Handling conflicts
+### Using it with Vanilla Javascript
 
-Some applications may require a more granular control over conflicts. For now, a mechanism in which all conflicting records are not updated (i.e. they are skipped) but instead are stored in a cache has been proposed. With this approach, the user can deal with the conflicts in a future moment, or perhaps keep both versions of the record.
-
-### Sync lifecycle hooks
-
-In order to make it more customizable, it was proposed to add hooks to the sync lifecycle. For example, execute custom code before and after upsertion/deletion of record, etc.
-
-This would make it possible to also synchronize files to services like Amazon S3 (Simple Storage Service), since files in the local app might be stored in disk along with a local database that keeps track of them. In this situation, the user may create a custom code which executes right before the record syncing, and which uploads the file itself. Without custom code being inserted in the middle of the lifecycle it'd be inconvenient to implement this feature.
-
-### Rollback and commit
-
-Rollback and commit statements are currently not supported. They might be implemented in the future as abstract methods and inserted somewhere in the sync lifecycle, but the implementation of the commit/rollback ultimately depends on the user.
-
-### Deletion
-
-Deleting records from a collection isn't supported yet. Since a collection can be fetched by a slave, the deleted records won't be fetched, and the slave cannot tell which records were deleted.
-
-Solutions:
-
-**Soft deletions:** The easiest solution is to store a `deleted` (boolean) flag in each record to mark it as deleted. This flag will be synced just like any other attribute in your record. Create an index on `deleted` to speed up queries.
-
-**Tracking deletions:** This solution involves having a collection that stores events, therefore a "deletion event" is stored whenever a record is deleted, and when the collections are synced, the device must execute those events to modify its data. This solution is the only one that works well when data from the database absolutely needs to be removed (due to how legacy systems work, etc). If your application logic allows restoring deleted records, use soft deletions instead.
-
-A way to implement this is by having your master (parent) collection's API return something like this when querying records that need to be synced:
-
-```json
-[
-  {
-    "action": "update",
-    "document": { "id": 15915, "name": "Christopher", "age": 29, "createdAt": "..." }
-  },
-  {
-    "action": "update",
-    "document": { "id": 93847, "name": "Mary", "age": 27, "createdAt": "..." }
-  }
-  {
-    "action": "delete",
-    "document": { "id": 1199234, "deletedAt": "..." }
-  }
-]
-```
-
-In this implementation, the master device must keep track of which items have been deleted, and arrange the output of the API endpoint so it contains records that have to be updated, and records that have to be deleted when syncing (by querying the deletion history collection).
-
-Then process all items by first checking the `action` value. If the value is `update`, then copy the document to the local database. If the action is `delete`, delete it from the local database (and optionally, if you plan to have slaves attached to it, keep track of which records were deleted as well, so it can also provide the list to its slave devices when syncing with them).
-
-A similar set of solutions is discussed in this article: https://www.datasyncbook.com/content/handling-deletions/
+Use with vanilla Javascript is not tested. It may not be convenient for development. Typescript is recommended.
 
 ## Develop
 

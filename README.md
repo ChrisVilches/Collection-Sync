@@ -80,6 +80,8 @@ class LocalCollection extends SynchronizableCollection {
 }
 ```
 
+You can also implement several lifecycle hooks for granular control over syncing. See [which methods can be overriden from SynchronizableCollection class](/docs/classes/SynchronizableCollection.md) for details.
+
 All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
@@ -178,6 +180,8 @@ collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictS
 ```
 
 See [sync](/docs/classes/SynchronizableCollection.md#sync) method documentation.
+
+See also [other specifications](sync_specifications.md) related to `sync`.
 
 When syncing, conflicts might occur, and there are a few strategies to overcome them. A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 

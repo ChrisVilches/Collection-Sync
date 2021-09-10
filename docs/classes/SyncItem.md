@@ -46,7 +46,7 @@ Contains an ID that identifies the synchronizable object, the document data itse
 
 #### Defined in
 
-SyncItem.ts:33
+[SyncItem.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L33)
 
 ## Properties
 
@@ -56,7 +56,7 @@ SyncItem.ts:33
 
 #### Defined in
 
-SyncItem.ts:9
+[SyncItem.ts:9](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L9)
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 #### Defined in
 
-SyncItem.ts:8
+[SyncItem.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L8)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-SyncItem.ts:6
+[SyncItem.ts:6](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L6)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-SyncItem.ts:7
+[SyncItem.ts:7](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L7)
 
 ## Accessors
 
@@ -100,7 +100,7 @@ SyncItem.ts:7
 
 #### Defined in
 
-SyncItem.ts:19
+[SyncItem.ts:19](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L19)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 #### Defined in
 
-SyncItem.ts:11
+[SyncItem.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L11)
 
 ___
 
@@ -130,7 +130,7 @@ Determines whether the item should be removed from the database or not.
 
 #### Defined in
 
-SyncItem.ts:29
+[SyncItem.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L29)
 
 ___
 
@@ -146,7 +146,7 @@ Determines whether the item should be updated or not.
 
 #### Defined in
 
-SyncItem.ts:24
+[SyncItem.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L24)
 
 ___
 
@@ -160,7 +160,7 @@ ___
 
 #### Defined in
 
-SyncItem.ts:15
+[SyncItem.ts:15](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L15)
 
 ## Methods
 
@@ -181,4 +181,4 @@ SyncItem.ts:15
 
 #### Defined in
 
-SyncItem.ts:43
+[SyncItem.ts:43](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/SyncItem.ts#L43)

@@ -27,29 +27,40 @@ abstract class SynchronizableCollection implements Collection {
 
   abstract countAll(): number | Promise<number>;
   abstract findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]>;
-  abstract preExecuteSync(synchronizer: Synchronizer): boolean;
   abstract syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]>;
   abstract itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]>;
   abstract latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined;
   abstract initialize(): Promise<void>;
 
-  // Note that hooks should prevent further execution if they signal or return some value.
-  // For example, in RoR it happens when a filter returns false.
-  abstract preCommitSync(synchronizer: Synchronizer): boolean;
-  /** 
-   * Commits the sync operation. Database engines that don't support
-   * this should implement a method that returns `true` (because the
-   * data was already added without the need for a commit statement). */
+  /**
+   * Executes before starting to send the data to the destination collection.
+   * If this method returns `false`, syncing will be aborted, and will continue only if
+   * the return value is `true`.
+   */
+  async preExecuteSync(_synchronizer: Synchronizer): Promise<boolean>{
+    return true;
+  }
+
+  /**
+   * Executes before committing the data. If this method returns `false`, then committing will
+   * be aborted. It will only commit the data if the return value is `true`.
+  */
+  async preCommitSync(_synchronizer: Synchronizer): Promise<boolean>{
+    return true;
+  }
+
   async commitSync(_itemsToSync: SyncItem[], _ignoredItems: SyncItem[], _conflictItems: SyncItem[]): Promise<boolean> {
     return true;
   };
 
-  /** Rollbacks the current data that's being synchronized. */
-  rollbackSync(_itemsToSync: SyncItem[], _ignoredItems: SyncItem[], _conflictItems: SyncItem[]): Promise<void> | void {
+  async rollbackSync(_itemsToSync: SyncItem[], _ignoredItems: SyncItem[], _conflictItems: SyncItem[]): Promise<void> {
   }
 
-  /** Executed at the end of each sync operation (whether it succeeded or not). */
-  cleanUp(_synchronizer: Synchronizer): Promise<void> | void {
+  /**
+   * Executed at the end of each sync operation (whether it succeeded or not).
+   * It's recommended to implement cleaning logic if necessary.
+  */
+  async cleanUp(_synchronizer: Synchronizer): Promise<void> {
   }
 
   set parent(p: Collection | undefined) {

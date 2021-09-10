@@ -9,7 +9,6 @@ import JsonFileSyncMetadata from "../src/example-implementations/JsonFileSyncMet
 import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata";
 import CollectionSyncMetadata from "../src/CollectionSyncMetadata";
 import SyncStatus from "../src/types/SyncStatus";
-import { setSyntheticLeadingComments } from "typescript";
 
 /**
  * Not the best way to reuse shared tests, but this one works to test the syncing mechanism

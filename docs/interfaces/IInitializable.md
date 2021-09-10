@@ -2,9 +2,14 @@
 
 # Interface: IInitializable
 
+## Hierarchy
+
+- **`IInitializable`**
+
+  ↳ [`Collection`](Collection.md)
+
 ## Implemented by
 
-- [`Collection`](../classes/Collection.md)
 - [`CollectionSyncMetadata`](../classes/CollectionSyncMetadata.md)
 
 ## Table of contents
@@ -27,4 +32,4 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/7ba4c6e/src/IInitializable.ts#L3)
+[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/b225f12/src/IInitializable.ts#L3)
