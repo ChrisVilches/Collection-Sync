@@ -377,6 +377,52 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7]);
     });
 
+    test("real life bi-directional example", async () => {
+      await master.syncBatch([makeItem(1, "2030/02/01")]);
+      await master.syncBatch([makeItem(2, "2030/02/01")]);
+      await master.syncBatch([makeItem(3, "2030/02/01")]);
+      await master.syncBatch([makeItem(4, "2030/02/01")]);
+      await master.syncBatch([makeItem(5, "2030/02/01")]);
+
+      
+      expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true);
+
+      await slave.sync(SyncOperation.Fetch, 100);
+      // TODO: I think status should actually be "committed" or something like that (more user friendly).
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.successfullyCommitted).toBe(true);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
+
+      // TODO: This one is a massive problem... it seems there's a huge issue with the library.
+      //       Maybe a simple way to fix this is by changing just the method that fetches
+      //       items that need to be synced, but how?
+      //
+      //       (What to fix: Right after a fetch, it shouldn't need to post what it just fetched).
+      //       Note that doing unnecessary stuff would be quite expensive for local disk -> Amazon S3 sync,
+      //       so it'd be great if this was completely optimized to avoid unnecessary syncs.
+      //
+      //       Another way to fix this, is by telling the user they should implement a mechanism like:
+      //       was the record touched after fetching it? If it's dirty, then it should be a target for
+      //       syncing. In other words, not just the updatedAt but also some other flag.
+      //
+      //       That might be a way to fix this issue. Needs testing.
+      expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
+      await slave.sync(SyncOperation.Post, 100);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
+
+      await master.syncBatch([makeItem(6, "2030/06/01")]);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true);
+
+      await slave.sync(SyncOperation.Fetch, 100);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
+      expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
+
+      await slave.sync(SyncOperation.Post, 100);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
+      expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
+    });
+
     xtest(".sync when items are not sorted correctly", () => {
       // expect error.
     });

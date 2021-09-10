@@ -128,13 +128,16 @@ abstract class SynchronizableCollection implements Collection {
       throw new Error("Limit must be a positive integer");
     }
 
+    const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
+    const lastSyncAt = await this.syncMetadata.getLastAt(syncOperation);
     const destCollection: Collection = (syncOperation == SyncOperation.Fetch ? this : this._parent) as Collection;
-    const synchronizer = new Synchronizer(destCollection);
+    const synchronizer = new Synchronizer(items, lastSyncAt, destCollection, options);
     this.synchronizers.push(synchronizer);
 
     try {
-      await this.syncAux(synchronizer, syncOperation, limit, options);
+      await this.syncAux(synchronizer, syncOperation);
     } catch(e) {
+      console.log(e)
       synchronizer.abort();
     } finally {
       if (SyncPolicy.shouldRollBack(synchronizer)) {
@@ -147,18 +150,12 @@ abstract class SynchronizableCollection implements Collection {
     return synchronizer;
   }
 
-  async syncAux(synchronizer: Synchronizer, syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions): Promise<void> {
-    const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
-
-    const lastSyncAt = await this.syncMetadata.getLastAt(syncOperation);
-
+  private async syncAux(synchronizer: Synchronizer, syncOperation: SyncOperation): Promise<void> {
+    await synchronizer.prepareSyncData();
+    
     if(!await this.preExecuteSync(synchronizer)) return;
 
-    await synchronizer.executeSync(
-      lastSyncAt,
-      items,
-      options
-    );
+    await synchronizer.executeSync();
 
     if(SyncPolicy.shouldCommit(synchronizer.syncStatus)){
       if(await this.preCommitSync(synchronizer)){

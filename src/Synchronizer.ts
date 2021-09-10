@@ -4,6 +4,7 @@ import { SyncConflictStrategy, SyncOperation, SyncOptions } from "./types/SyncTy
 import DocId from "./types/DocId";
 import * as R from "ramda";
 import SyncStatus from "./types/SyncStatus";
+import ConflictPolicy from "./ConflictPolicy";
 
 class Synchronizer{
   /** Used to keep state of sync process. */
@@ -23,6 +24,12 @@ class Synchronizer{
   private destCollection: Collection;
   private committed: boolean = false;
   private _rollbacked: boolean = false;
+  private _options: SyncOptions;
+
+  private _unfilteredItems: SyncItem[];
+  private _lastSyncAt?: Date;
+
+  private _alreadyExecuted: boolean = false;
 
   get successfullyRollbacked(): boolean{
     return this._rollbacked;
@@ -52,8 +59,50 @@ class Synchronizer{
     return this._ignoredItems;
   }
 
-  constructor(destCollection: Collection){
+  constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions){
     this.destCollection = destCollection;
+    this._options = options;
+    this._unfilteredItems = items;
+    this._lastSyncAt = lastSyncAt;
+  }
+
+  async prepareSyncData(): Promise<void>{
+    let compareObjects: {[key in DocId]: SyncItem} = {};
+
+    compareObjects = R.indexBy(R.prop('id'), await this.destCollection.findByIds(this._unfilteredItems.map(i => i.id)));
+
+    /**
+     * This is to stop adding items to sync after a conflict (with raise error flag) has been found.
+     * If conflicts are ignored, this doesn't do anything.
+    */
+    let stopAdding = false;
+
+    for(let i=0; i<this._unfilteredItems.length; i++){
+      const item = this._unfilteredItems[i];
+      const objectToCompare: SyncItem | undefined = compareObjects[item.id];
+
+      const conflict = ConflictPolicy.isConflict(this._lastSyncAt, objectToCompare);
+
+      if(ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)){
+        this._ignoredItems.push(item);
+      }
+
+      if(ConflictPolicy.shouldSyncItem(conflict, this._options.conflictStrategy, stopAdding)){
+        this._itemsToSync.push(item);
+      }
+
+      if(ConflictPolicy.shouldHandleAsConflict(conflict, this._options.conflictStrategy)){
+        this._conflictItems.push(item);
+      }
+
+      if(ConflictPolicy.shouldStopAdding(conflict, this._options.conflictStrategy)){
+        stopAdding = true;
+      }
+    }
+
+    if(ConflictPolicy.shouldSetStatusAsConflict(this._conflictItems.length > 0, this._options.conflictStrategy)){
+      this._syncStatus = SyncStatus.Conflict;
+    }
   }
 
   /**
@@ -64,23 +113,18 @@ class Synchronizer{
    * and does not throw any error.
    * This method can only be executed once. In order to sync again, create a new instance.
   */
-  async executeSync(lastSyncAt: Date | undefined, items: SyncItem[], options: SyncOptions){
-    if(this._syncStatus != SyncStatus.NotStarted){
+  async executeSync(){
+    if(this._alreadyExecuted){
       throw new Error("Cannot execute sync again");
     }
 
-    if(items.length == 0){
-      this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;
-      return;
-    }
+    this._alreadyExecuted = true;
 
-    this._syncStatus = SyncStatus.Running;
-
-    if(!this.areItemsSorted(items)){
+    if(!this.areItemsSorted(this._itemsToSync)){
       throw new Error("Items to sync are not ordered correctly (order must be updatedAt ASC)");
     }
 
-    await this.syncItems(lastSyncAt, items, options);
+    await this.syncItems();
   }
 
   private cleanUp(){
@@ -138,52 +182,12 @@ class Synchronizer{
     }
   }
 
-  // TODO: Extremely high cyclomatic complexity. Refactor.
-  private async syncItems(lastSyncAt: Date | undefined, items: SyncItem[], options: SyncOptions): Promise<void>{
-    const force = options.conflictStrategy == SyncConflictStrategy.Force;
-
-    let compareObjects: {[key in DocId]: SyncItem} = {};
-
-    compareObjects = R.indexBy(R.prop('id'), await this.destCollection.findByIds(items.map(i => i.id)));
-
-    /**
-     * This is to stop adding items to sync after a conflict (with raise error flag) has been found.
-     * If conflicts are ignored, this doesn't do anything.
-    */
-    let stopAdding = false;
-
-    for(let i=0; i<items.length; i++){
-      const objectToCompare = compareObjects[items[i].id];
-      const conflict = lastSyncAt && objectToCompare?.updatedAt > lastSyncAt;
-
-      // TODO: The line above used to be:
-      //       objectToCompare?.updatedAt > items[i].updatedAt;
-      //       However when changing it (fixed logic error) the tests don't throw anything. This means the test cases are poor.
-      //
-      //       The fix above was made because the previous logic was "your item is newer than mine", but instead it should be
-      //       "both items have been modified since the last time I synced", which is what that line does now (fixed, but untested).
-      //
-      //       Also new conflict strategies can be introduced, such as "Force if newer", "Raise error if older" or something like that.
-
-      if((force || !conflict) && !stopAdding){
-        this._itemsToSync.push(items[i]);
-      } else if(conflict) {
-        this._conflictItems.push(items[i]);
-
-        if(options.conflictStrategy == SyncConflictStrategy.Ignore){
-          this._ignoredItems.push(items[i]);
-        } else {
-          stopAdding = true;
-        }
-      }
-    }
-
-    if(this._conflictItems.length > 0 && options.conflictStrategy == SyncConflictStrategy.RaiseError){
-      this._syncStatus = SyncStatus.Conflict;
-      return;
-    }
+  private async syncItems(): Promise<void>{
+    if(this._syncStatus == SyncStatus.Conflict) return;
 
     let syncedItems: SyncItem[] = [];
+
+    this._syncStatus = SyncStatus.Running;
 
     if(this._itemsToSync.length == 0)
       this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;

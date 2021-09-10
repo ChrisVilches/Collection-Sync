@@ -9,7 +9,7 @@ Specifications for how errors are handled during a sync operation.
 | Update last sync date<sup>1</sup> | No | Yes | No | Yes |
 | Execute rollback<sup>2</sup> | No<sup>3</sup>  | No<sup>4</sup> | Yes<sup>5</sup> | No |
 | Execute commit | No | Yes | No | Yes |
-| Error type | Conflict | Conflict | Unexpected | None |
+| Error type | Conflict | None | Unexpected | None |
 
 Notes:
 

@@ -15,6 +15,8 @@ export enum SyncConflictStrategy {
 
   /** Syncs the items in order until there's a conflict. */
   SyncUntilConflict = "SyncUntilConflict"
+
+  // TODO: Also new conflict strategies can be introduced, such as "Force if newer", "Raise error if older" or something like that.
 }
 
 /** Options for syncing. */
