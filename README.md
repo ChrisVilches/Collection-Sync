@@ -55,7 +55,7 @@ class LocalCollection extends SynchronizableCollection {
     // Count collection documents.
     return 100;
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // Executes async logic to initialize collection or datastore (open file, create database connection, etc).
   }
   findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
@@ -80,6 +80,8 @@ class LocalCollection extends SynchronizableCollection {
 }
 ```
 
+Install `npm install --save @types/node` if you get errors related to missing Node types.
+
 You can also implement several lifecycle hooks for granular control over syncing. See [which methods can be overriden from SynchronizableCollection class](/docs/classes/SynchronizableCollection.md) for details.
 
 All methods allow the use of `async/await` if needed.
@@ -97,7 +99,7 @@ class RemoteCollection extends SynchronizableCollection {
     // https://your_server.com/api/users/count_all
     // and return its value here.
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // ...
   }
   findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
@@ -133,7 +135,7 @@ class MySyncMetadata extends CollectionSyncMetadata{
   getLastPostAt(): Date | Promise<Date | undefined> | undefined {
     // ...
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // ...
   }
 }
