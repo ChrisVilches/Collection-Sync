@@ -1,15 +1,18 @@
 export enum SyncConflictStrategy {
   /** Keep data from the side that initiated the sync. */
-  Force,
+  Force = "Force",
 
-  /** Abort sync. */
-  RaiseError,
+  /** Abort sync (sync all or none). */
+  RaiseError = "RaiseError",
 
   /**
+   * TODO: Improve comment.
    * In order to fix conflicts correctly, at least one
    * sync must not use ignore and throw error and select option.
   */
-  Ignore
+  Ignore = "Ignore",
+
+  SyncUntilConflict = "SyncUntilConflict"
 }
 
 /** Options for syncing. */

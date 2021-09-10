@@ -4,6 +4,7 @@ import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
 import CollectionSyncMetadata from "../CollectionSyncMetadata";
 import DocId from "../types/DocId";
+import Synchronizer from "../Synchronizer";
 import NeDB from "nedb";
 
 /** Since some databases auto-generate an ID value (such as NeDB), a custom ID attribute name is defined to store a custom ID value in the document. */
@@ -96,6 +97,13 @@ class SynchronizableNeDB extends SynchronizableCollection{
         resolve(this.makeItem(docs[0]));
       });
     });
+  }
+
+  preExecuteSync(_synchronizer: Synchronizer): boolean {
+    return true;
+  }
+  preCommitSync(_synchronizer: Synchronizer): boolean {
+    return true;
   }
 }
 

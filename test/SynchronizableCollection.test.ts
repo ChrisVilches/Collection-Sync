@@ -2,19 +2,37 @@ import SynchronizableCollection from "../src/SynchronizableCollection";
 import SynchronizableArray from "../src/example-implementations/SynchronizableArray";
 import SynchronizableNeDB from "../src/example-implementations/SynchronizableNeDB";
 import ParentNotSetError from "../src/exceptions/ParentNotSetError";
-import UpdateNewerItemError from "../src/exceptions/UpdateNewerItemError";
 import PersonItem from "../src/example-implementations/PersonItem";
 import DocId from "../src/types/DocId";
-import { SyncOperation } from "../src/types/SyncTypes";
-import { SyncConflictStrategy } from "../src/types/SyncTypes";
+import { SyncConflictStrategy, SyncOptions, SyncOperation } from "../src/types/SyncTypes";
 import JsonFileSyncMetadata from "../src/example-implementations/JsonFileSyncMetadata";
 import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata";
 import CollectionSyncMetadata from "../src/CollectionSyncMetadata";
+import SyncStatus from "../src/types/SyncStatus";
 
 /**
  * Not the best way to reuse shared tests, but this one works to test the syncing mechanism
  * using all combinations of class implementations (to make sure it works on all kinds of databases).
  */
+
+/*
+TODO: Maybe a better way to test slave/master sync stuff would be to create a
+      makeMock factory which takes one <ID, date> array per collection (slave, master).
+      Example:
+      const { slave, master } = makeMock(
+                                          [[id, date], [id, date]],
+                                          [[id, date], [id, date], [id, date]]
+                                        )
+*/
+
+/** Add default values to partial option object. */
+function makeOpts(obj: any): SyncOptions{
+  const defaultOpts: SyncOptions = {
+    conflictStrategy: SyncConflictStrategy.RaiseError
+  };
+
+  return Object.assign(defaultOpts, obj);
+}
 
 function makeItem(id: DocId, date: string): PersonItem{
   return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
@@ -98,21 +116,16 @@ const executeAllTests = (options: TestExecutionArgument) => {
       await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
 
-      let err: any;
-      try{
-        await slave.sync(SyncOperation.Fetch, 100);
-      } catch (e){
-        err = e;
-      }
+      await slave.sync(SyncOperation.Fetch, 100);
 
-      expect(err).toBeInstanceOf(UpdateNewerItemError);
-      expect(err.id).toEqual("marisel34");
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.Conflict);
+      expect(slave.lastSynchronizer?.conflictItem?.id).toEqual("marisel34");
     });
 
     test(".sync (fetch) with conflict (use parent data)", async () => {
       await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
-      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Force });
+      await slave.sync(SyncOperation.Fetch, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Force }));
 
       // Uses parent data.
       expect((await slave.findByIds(["marisel34"]))[0]?.updatedAt).toEqual(new Date("2020/06/01"));
@@ -121,7 +134,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     test(".sync (fetch) with conflict (use ignore strategy)", async () => {
       await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
-      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
+      await slave.sync(SyncOperation.Fetch, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
       expect((await slave.findByIds(["marisel34"]))[0]?.updatedAt).toEqual(new Date("2028/06/01"));
     });
 
@@ -159,7 +172,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await master.countAll()).toEqual(2);
     });
 
-    test(".sync (post) with conflict", async () => {
+    test(".sync (post) with conflict tempcomment", async () => {
       await slave.syncBatch([
         makeItem(121, "2025/02/01"),
         makeItem(122, "2025/03/01"),
@@ -169,36 +182,36 @@ const executeAllTests = (options: TestExecutionArgument) => {
       await master.syncBatch([makeItem(123, "2026/01/01")]);
       expect(await slave.needsSync(SyncOperation.Post)).toBeTruthy();
 
-      await expect(async () => { await slave.sync(SyncOperation.Post, 100) })
-      .rejects
-      .toThrow(UpdateNewerItemError);
+      await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.SyncUntilConflict });
+
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.SuccessPartial);
 
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2025/03/01"));
     });
 
     test(".sync (post) with conflict (use slave data)", async () => {
-      slave.syncBatch([makeItem(123, "2025/01/01")]);
-      master.syncBatch([makeItem(123, "2026/01/01")]);
-      await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Force });
+      await slave.syncBatch([makeItem(123, "2025/01/01")]);
+      await master.syncBatch([makeItem(123, "2026/01/01")]);
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Force }));
       expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
       expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
     });
 
     test(".sync (post) with conflict (use ignore strategy)", async () => {
-      slave.syncBatch([makeItem(123, "2025/01/01")]);
-      master.syncBatch([makeItem(123, "2026/01/01")]);
-      await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
+      await slave.syncBatch([makeItem(123, "2025/01/01")]);
+      await master.syncBatch([makeItem(123, "2026/01/01")]);
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
       // NOTE: latest post date is updated even if one is ignored.
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2025/01/01"));
     });
 
     test(".sync (post) with conflict (use ignore strategy)", async () => {
-      slave.syncBatch([
+      await slave.syncBatch([
         makeItem(123, "2025/01/01"),
         makeItem(124, "2028/01/01")
       ]);
-      master.syncBatch([makeItem(123, "2026/01/01")]);
-      await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.Ignore });
+      await master.syncBatch([makeItem(123, "2026/01/01")]);
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
       expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
       expect((await master.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2026/01/01"));
 
