@@ -57,7 +57,7 @@ class LocalCollection extends SynchronizableCollection {
     // Count collection documents.
     return 100;
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // Executes async logic to initialize collection or datastore (open file, create database connection, etc).
   }
   findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
@@ -82,6 +82,10 @@ class LocalCollection extends SynchronizableCollection {
 }
 ```
 
+Install `npm install --save @types/node` if you get errors related to missing Node types.
+
+You can also implement several lifecycle hooks for granular control over syncing. See [which methods can be overriden from SynchronizableCollection class](/docs/classes/SynchronizableCollection.md) for details.
+
 All methods allow the use of `async/await` if needed.
 
 Next, implement a class that communicates with the remote collection (datastore).
@@ -97,7 +101,7 @@ class RemoteCollection extends SynchronizableCollection {
     // https://your_server.com/api/users/count_all
     // and return its value here.
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // ...
   }
   findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]> {
@@ -133,7 +137,7 @@ class MySyncMetadata extends CollectionSyncMetadata{
   getLastPostAt(): Date | Promise<Date | undefined> | undefined {
     // ...
   }
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // ...
   }
 }
@@ -180,6 +184,8 @@ collectionSlave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictS
 ```
 
 See [sync](/docs/classes/SynchronizableCollection.md#sync) method documentation.
+
+See also [other specifications](sync_specifications.md) related to `sync`.
 
 When syncing, conflicts might occur, and there are a few strategies to overcome them. A conflict occurs when trying to update a record using a record with an older `updatedAt`. In general, when synchronizing data collections, older data should be overwritten by newer data, but sometimes this is not the case, and that's when a conflict is generated. See [SyncConflictStrategy](/docs/enums/SyncConflictStrategy.md) for details.
 
