@@ -60,8 +60,11 @@ class SynchronizableNeDB extends SynchronizableCollection{
   private executeSyncItem(item: SyncItem): Promise<SyncItem>{
     return new Promise((resolve, reject) => {
       if(item.isDelete){
-        // TODO: Behavior is untested.
-        // Deletion not supported yet.
+        // Behavior is untested.
+        // In theory it should work right away, but it might be necessary to tweak syncBatch a bit
+        // so that it returns upserted items as well as deleted items (e.g. a map with both keys
+        // instead of just one return value).
+        // Deletion not supported by this implementation.
       } else {
         // These two modifications are to comply with the sync logic.
         // (1) ID is not generated automatically (must be kept across databases), therefore use custom one (some DBs auto-generate it).

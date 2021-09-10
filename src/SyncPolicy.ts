@@ -5,18 +5,21 @@ export default class SyncPolicy{
   /** Indicates whether rollback should be executed or not. */
   static shouldRollBack(synchronizer: Synchronizer): boolean{
     const syncStatus = synchronizer.syncStatus;
-    return !synchronizer.successfullyCommitted || syncStatus == SyncStatus.UnexpectedError;
+    return syncStatus == SyncStatus.UnexpectedError ||
+             !synchronizer.successfullyCommitted ||
+             syncStatus == SyncStatus.Aborted;
   }
 
   /** Indicates whether commit should be executed or not. */
   static shouldCommit(syncStatus: SyncStatus): boolean{
-    if(syncStatus == SyncStatus.Success) return true;
-    if(syncStatus == SyncStatus.SuccessPartial) return true;
+    if(syncStatus == SyncStatus.PreCommitDataTransmittedSuccessfully) return true;
     return false;
   }
 
   /** Indicates whether last sync date should be updated or not. */
   static shouldUpdateLastSyncAt(synchronizer: Synchronizer): boolean{
-    return synchronizer.successfullyCommitted && Boolean(synchronizer.lastUpdatedAt);
+    return synchronizer.successfullyCommitted &&
+             Boolean(synchronizer.lastUpdatedAt) &&
+             !synchronizer.successfullyRollbacked; // This condition is probably unnecessary since it overlaps with the other ones.
   }
 }

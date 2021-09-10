@@ -1,11 +1,7 @@
 import SyncItem from "./SyncItem";
 import DocId from "./types/DocId";
 import IInitializable from "./IInitializable";
-import Synchronizer from "./Synchronizer";
 
-// TODO: One thing to keep in mind is that if there are multiple users synchronizing, then commit and rollback
-//       must affect the data of only that sync process. This should be implemented by the user (in the slave and master
-//       collection, implementation is ad-hoc). But it'd be great to comment it.
 /**
  * This interface defines several CRUD methods to operate on a collection.
  * These methods can be implemented by accessing a local database, requesting a restful API (remote DB), etc.
@@ -34,20 +30,25 @@ interface Collection extends IInitializable {
   */
   latestUpdatedItem(): Promise<SyncItem | undefined> | SyncItem | undefined;
 
-  // TODO: dummy_data_that_user_can_inspect: number <---- This should be not Synchronizer
-  //       or SynchronizableCollection related data, but plain old item[] like
-  //       inserted[], deleted[], ignored[], etc. Don't clutter this class with sync stuff.
-  //       In fact, the "syncBatch" method is like a simple DB CRUD method.
+  // TODO: For commit and rollback, maybe adding "items that were actually synced" (successfully)
+  //       would be great too. This is kind of difficult to implement because that would require to
+  //       rely on the user implementation of 'syncBatch', which may be inaccurate, but it's the only way.
 
   /** 
    * Commits the sync operation. Database engines that don't support
    * this should implement a method that returns `true` (because the
    * data was already added without the need for a commit statement).
+   * Make sure to commit the data from one specific sync process in order to avoid committing data
+   * pushed by multiple users synchronizing at the same time.
   */
-  commitSync(dummy_data_that_user_can_inspect: number): Promise<boolean>;
+  commitSync(itemsToSync: SyncItem[], ignoredItems: SyncItem[], conflictItems: SyncItem[]): Promise<boolean>;
 
-  /** Rollbacks the current data that's being synchronized. */
-  rollbackSync(dummy_data_that_user_can_inspect: number): Promise<void> | void;
+  /**
+   * Rollbacks the current data that's being synchronized.
+   * Make sure to rollback the data from one specific sync process in order to avoid discarding data
+   * pushed by multiple users synchronizing at the same time.
+  */
+  rollbackSync(itemsToSync: SyncItem[], ignoredItems: SyncItem[], conflictItems: SyncItem[]): Promise<void> | void;
 }
 
 export default Collection;

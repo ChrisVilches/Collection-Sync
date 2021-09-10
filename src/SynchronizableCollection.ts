@@ -5,7 +5,6 @@ import DocId from "./types/DocId";
 import Collection from "./Collection";
 import Synchronizer from "./Synchronizer";
 import CollectionSyncMetadata from "./CollectionSyncMetadata";
-import SyncStatus from "./types/SyncStatus";
 import SyncPolicy from "./SyncPolicy";
 
 // TODO: Many methods in this class could be private.
@@ -15,7 +14,7 @@ abstract class SynchronizableCollection implements Collection {
     conflictStrategy: SyncConflictStrategy.RaiseError
   };
 
-  // TODO: If it remains private and unused forever then consider removing this.
+  /** Store history of sync operations. */
   private synchronizers: Synchronizer[] = [];
 
   private _parent?: Collection;
@@ -41,12 +40,12 @@ abstract class SynchronizableCollection implements Collection {
    * Commits the sync operation. Database engines that don't support
    * this should implement a method that returns `true` (because the
    * data was already added without the need for a commit statement). */
-  async commitSync(): Promise<boolean> {
+  async commitSync(_itemsToSync: SyncItem[], _ignoredItems: SyncItem[], _conflictItems: SyncItem[]): Promise<boolean> {
     return true;
   };
 
   /** Rollbacks the current data that's being synchronized. */
-  rollbackSync(dummy_data_that_user_can_inspect: number): Promise<void> | void {
+  rollbackSync(_itemsToSync: SyncItem[], _ignoredItems: SyncItem[], _conflictItems: SyncItem[]): Promise<void> | void {
   }
 
   /** Executed at the end of each sync operation (whether it succeeded or not). */
@@ -109,7 +108,11 @@ abstract class SynchronizableCollection implements Collection {
     }
   }
 
-  async sync(syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions) {
+  /**
+   * Wraps sync operation so that `cleanUp` and `rollback` are conveniently placed at the end
+   * and always executed.
+  */
+  async sync(syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions): Promise<Synchronizer> {
     if (limit < 1) {
       throw new Error("Limit must be a positive integer");
     }
@@ -117,44 +120,44 @@ abstract class SynchronizableCollection implements Collection {
     const destCollection: Collection = (syncOperation == SyncOperation.Fetch ? this : this._parent) as Collection;
     const synchronizer = new Synchronizer(destCollection);
     this.synchronizers.push(synchronizer);
-    const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
-
-    if(items.length == 0){
-      return;
-    }
-
-    const lastSyncAt = await this.syncMetadata.getLastAt(syncOperation);
-
-    if(!await this.preExecuteSync(synchronizer)){
-      return synchronizer.abort();
-    }
 
     try {
-      await synchronizer.executeSync(
-        lastSyncAt,
-        items,
-        options
-      );
-
-      if(SyncPolicy.shouldCommit(synchronizer.syncStatus)){
-        // Only commit if pre commit returns true.
-        if(await this.preCommitSync(synchronizer)){
-          await synchronizer.commit();
-        }
-      }
+      await this.syncAux(synchronizer, syncOperation, limit, options);
+    } catch(e) {
+      synchronizer.abort();
     } finally {
       if (SyncPolicy.shouldRollBack(synchronizer)) {
         await synchronizer.rollback();
-      }
-
-      if (SyncPolicy.shouldUpdateLastSyncAt(synchronizer) && synchronizer.lastUpdatedAt) {
-        await this.syncMetadata.setLastAt(synchronizer?.lastUpdatedAt, syncOperation);
       }
 
       await this.cleanUp(synchronizer);
     }
 
     return synchronizer;
+  }
+
+  async syncAux(synchronizer: Synchronizer, syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions): Promise<void> {
+    const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
+
+    const lastSyncAt = await this.syncMetadata.getLastAt(syncOperation);
+
+    if(!await this.preExecuteSync(synchronizer)) return;
+
+    await synchronizer.executeSync(
+      lastSyncAt,
+      items,
+      options
+    );
+
+    if(SyncPolicy.shouldCommit(synchronizer.syncStatus)){
+      if(await this.preCommitSync(synchronizer)){
+        await synchronizer.commit();
+      }
+    }
+
+    if (SyncPolicy.shouldUpdateLastSyncAt(synchronizer) && synchronizer.lastUpdatedAt) {
+      await this.syncMetadata.setLastAt(synchronizer?.lastUpdatedAt, syncOperation);
+    }
   }
 }
 

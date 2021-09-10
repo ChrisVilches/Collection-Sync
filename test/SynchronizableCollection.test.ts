@@ -9,6 +9,7 @@ import JsonFileSyncMetadata from "../src/example-implementations/JsonFileSyncMet
 import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata";
 import CollectionSyncMetadata from "../src/CollectionSyncMetadata";
 import SyncStatus from "../src/types/SyncStatus";
+import { setSyntheticLeadingComments } from "typescript";
 
 /**
  * Not the best way to reuse shared tests, but this one works to test the syncing mechanism
@@ -16,17 +17,17 @@ import SyncStatus from "../src/types/SyncStatus";
  */
 
 /*
-TODO: Maybe a better way to test slave/master sync stuff would be to create a
-      makeMock factory which takes one <ID, date> array per collection (slave, master).
-      Example:
-      const { slave, master } = makeMock(
-                                          [[id, date], [id, date]],
-                                          [[id, date], [id, date], [id, date]]
-                                        )
+Maybe a better way to test slave/master sync stuff would be to create a
+makeMock factory which takes one <ID, date> array per collection (slave, master).
+Example:
+const { slave, master } = makeMock(
+                                    [[id, date], [id, date]],
+                                    [[id, date], [id, date], [id, date]]
+                                  )
 */
 
 /** Add default values to partial option object. */
-function makeOpts(obj: any): SyncOptions{
+function makeOpts(obj: any): SyncOptions {
   const defaultOpts: SyncOptions = {
     conflictStrategy: SyncConflictStrategy.RaiseError
   };
@@ -34,7 +35,7 @@ function makeOpts(obj: any): SyncOptions{
   return Object.assign(defaultOpts, obj);
 }
 
-function makeItem(id: DocId, date: string): PersonItem{
+function makeItem(id: DocId, date: string): PersonItem {
   return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
 }
 
@@ -93,17 +94,17 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await slave.countAll()).toEqual(0);
       expect(await master.countAll()).toEqual(2);
     });
-    
+
     test(".needsSync (fetch)", async () => {
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
       expect(await master.needsSync(SyncOperation.Fetch)).toBeFalsy();
     });
-    
+
     test(".itemsToSync (fetch)", async () => {
       expect(await slave.itemsToSync(SyncOperation.Fetch, 100)).toHaveLength(1);
       await expect(async () => { await master.itemsToSync(SyncOperation.Fetch, 100) })
-      .rejects
-      .toThrow(ParentNotSetError);
+        .rejects
+        .toThrow(ParentNotSetError);
     });
 
     test(".needsSync (fetch)", async () => {
@@ -112,14 +113,154 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeFalsy();
     });
 
-    test(".sync (fetch) with conflict", async () => {
+    test(".sync (fetch) with conflict (raise error)", async () => {
       await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
+
+      // Master starts with these two:
+      // makeItem("chris123", "2020/01/01"),
+      // makeItem("marisel34", "2020/06/01")
+      // And slave has last fetched at "2020/02/01"
+
+      // Item "chris123" from master is skipped.
+      // Items to sync --> only "marisel34".
+
+      // Slave adds makeItem("marisel34", "2028/06/01"), which is more recent than master one.
+      // Conflict arises. It raises error by default.
+      // Nothing gets added.
 
       await slave.sync(SyncOperation.Fetch, 100);
 
       expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.Conflict);
-      expect(slave.lastSynchronizer?.conflictItem?.id).toEqual("marisel34");
+      expect(slave.lastSynchronizer?.conflictItems[0]?.id).toEqual("marisel34");
+      expect(await slave.countAll()).toEqual(1);
+    });
+
+    test(".sync (fetch) with conflict (allow partial sync, none gets partially synced)", async () => {
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
+
+      // Master starts with these two:
+      // makeItem("chris123", "2020/01/01"),
+      // makeItem("marisel34", "2020/06/01")
+      // And slave has last fetched at "2020/02/01"
+
+      // Item "chris123" from master is skipped.
+      // Items to sync --> only "marisel34".
+
+      // Slave adds makeItem("marisel34", "2028/06/01"), which is more recent than master one.
+      // Conflict arises. Partial sync is allowed.
+      // But the first one is the conflicting one, so nothing gets added.
+
+      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.SyncUntilConflict });
+
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.conflictItems[0]?.id).toEqual("marisel34");
+      expect(await slave.countAll()).toEqual(1);
+    });
+
+    test(".sync (fetch) with conflict (allow partial sync, none gets partially synced, part II)", async () => {
+      expect(await slave.countAll()).toEqual(0);
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
+      await master.syncBatch([makeItem("newstuff", "2028/03/01")]);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
+
+      expect(await slave.countAll()).toEqual(1);
+
+      // Master starts with these three:
+      // makeItem("chris123", "2020/01/01"),
+      // makeItem("marisel34", "2020/06/01")
+      // makeItem("newstuff", "2028/03/01")
+      // And slave has last fetched at "2020/02/01"
+
+      // Item "chris123" from master is skipped.
+      // Items to sync --> "marisel34" and "newstuff"
+
+      // Slave adds makeItem("marisel34", "2028/06/01"), which is more recent than master one.
+      // Conflict arises. Partial sync is allowed.
+      // But the first one is the conflicting one, so nothing gets added.
+
+      const itemsToFetch = await slave.itemsToSync(SyncOperation.Fetch, 10);
+      expect(itemsToFetch.length).toBe(2);
+      expect(itemsToFetch[0].id).toBe("marisel34");
+      expect(itemsToFetch[1].id).toBe("newstuff");
+
+      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.SyncUntilConflict });
+
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.conflictItems[0]?.id).toEqual("marisel34");
+      expect(await slave.countAll()).toEqual(1);
+    });
+
+    test(".sync (fetch) with conflict (allow partial sync, one gets partially synced)", async () => {
+      expect(await slave.countAll()).toEqual(0);
+
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
+      await master.syncBatch([makeItem("newstuff", "2020/05/01")]);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
+
+      // Master starts with these three:
+      // makeItem("chris123", "2020/01/01"),
+      // makeItem("marisel34", "2020/06/01")
+      // makeItem("newstuff", "2020/05/01")
+      // And slave has last fetched at "2020/02/01"
+
+      // Item "chris123" from master is skipped.
+      // Items to sync --> "newstuff" and "marisel34" (newstuff has lower updatedAt)
+
+      // Slave adds makeItem("marisel34", "2028/06/01"), which is more recent than master one.
+      // Conflict arises. Partial sync is allowed.
+      // The second one is the conflicting one, so the first one should be added.
+
+      expect(await slave.countAll()).toEqual(1);
+
+      const itemsToFetch = await slave.itemsToSync(SyncOperation.Fetch, 10);
+      expect(itemsToFetch.length).toBe(2);
+      expect(itemsToFetch[0].id).toBe("newstuff");
+      expect(itemsToFetch[1].id).toBe("marisel34");
+
+      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.SyncUntilConflict });
+
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.conflictItems[0]?.id).toEqual("marisel34");
+      expect(slave.lastSynchronizer?.lastUpdatedAt).toEqual(new Date("2020/05/01"));
+      expect(await slave.countAll()).toEqual(2);
+    });
+
+    test(".sync (fetch) with conflict (allow partial sync, one gets partially synced)", async () => {
+      expect(await slave.countAll()).toEqual(0);
+
+      await slave.syncBatch([makeItem("marisel34", "2028/06/01")]);
+      await master.syncBatch([makeItem("newstuff", "2020/05/01")]);
+      expect(await slave.needsSync(SyncOperation.Fetch)).toBeTruthy();
+
+      // Master starts with these three:
+      // makeItem("chris123", "2020/01/01"),
+      // makeItem("marisel34", "2020/06/01")
+      // makeItem("newstuff", "2020/05/01")
+      // And slave has last fetched at "2020/02/01"
+
+      // Item "chris123" from master is skipped.
+      // Items to sync --> "newstuff" and "marisel34" (newstuff has lower updatedAt)
+
+      // Slave adds makeItem("marisel34", "2028/06/01"), which is more recent than master one.
+      // Conflict arises. All or nothing (raise error).
+      // The second one is the conflicting one, so none should be added.
+
+      expect(await slave.countAll()).toEqual(1);
+
+      const itemsToFetch = await slave.itemsToSync(SyncOperation.Fetch, 10);
+      expect(itemsToFetch.length).toBe(2);
+      expect(itemsToFetch[0].id).toBe("newstuff");
+      expect(itemsToFetch[1].id).toBe("marisel34");
+
+      await slave.sync(SyncOperation.Fetch, 100, { conflictStrategy: SyncConflictStrategy.RaiseError });
+
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.Conflict);
+      expect(slave.lastSynchronizer?.conflictItems[0]?.id).toEqual("marisel34");
+      expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2020/02/01")); // Doesn't change.
+      expect(slave.lastSynchronizer?.lastUpdatedAt).toEqual(undefined); // Sync process didn't update it.
+      expect(await slave.countAll()).toEqual(1);
     });
 
     test(".sync (fetch) with conflict (use parent data)", async () => {
@@ -172,7 +313,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await master.countAll()).toEqual(2);
     });
 
-    test(".sync (post) with conflict tempcomment", async () => {
+    test(".sync (post) with conflict", async () => {
       await slave.syncBatch([
         makeItem(121, "2025/02/01"),
         makeItem(122, "2025/03/01"),
@@ -184,7 +325,8 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
       await slave.sync(SyncOperation.Post, 100, { conflictStrategy: SyncConflictStrategy.SyncUntilConflict });
 
-      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.SuccessPartial);
+      expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.conflictItems[0]).toBeTruthy;
 
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2025/03/01"));
     });
@@ -253,13 +395,13 @@ const syncMetadataInitFns: (() => CollectionSyncMetadata)[] = [
 ];
 
 // Test all combinations of class implementations.
-for(let i=0; i<collectionInitFns.length; i++){
-  for(let j=0; j<collectionInitFns.length; j++){
-    for(let k=0; k<syncMetadataInitFns.length; k++){
+for (let i = 0; i < collectionInitFns.length; i++) {
+  for (let j = 0; j < collectionInitFns.length; j++) {
+    for (let k = 0; k < syncMetadataInitFns.length; k++) {
       let slaveInit = collectionInitFns[i];
       let masterInit = collectionInitFns[j];
       let syncMetadataInit = syncMetadataInitFns[k];
-  
+
       executeAllTests({
         slaveInit,
         masterInit,
