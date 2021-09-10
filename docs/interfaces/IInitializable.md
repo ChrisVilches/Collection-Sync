@@ -32,4 +32,4 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/IInitializable.ts#L3)
+[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/IInitializable.ts#L3)

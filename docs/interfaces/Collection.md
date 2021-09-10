@@ -54,7 +54,7 @@ pushed by multiple users synchronizing at the same time.
 
 #### Defined in
 
-[Collection.ts:44](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L44)
+[Collection.ts:44](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L44)
 
 ___
 
@@ -70,7 +70,7 @@ Gets the number of items in the collection.
 
 #### Defined in
 
-[Collection.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L11)
+[Collection.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L11)
 
 ___
 
@@ -92,7 +92,7 @@ Returns a list of records using an ID list as search query.
 
 #### Defined in
 
-[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L14)
+[Collection.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L14)
 
 ___
 
@@ -112,7 +112,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/IInitializable.ts#L3)
+[IInitializable.ts:3](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/IInitializable.ts#L3)
 
 ___
 
@@ -137,7 +137,7 @@ will be executed).
 
 #### Defined in
 
-[Collection.ts:26](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L26)
+[Collection.ts:26](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L26)
 
 ___
 
@@ -153,7 +153,7 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[Collection.ts:31](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L31)
+[Collection.ts:31](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L31)
 
 ___
 
@@ -179,7 +179,7 @@ pushed by multiple users synchronizing at the same time.
 
 #### Defined in
 
-[Collection.ts:51](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L51)
+[Collection.ts:51](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L51)
 
 ___
 
@@ -202,4 +202,4 @@ Order of document processing doesn't need to be in any particular order.
 
 #### Defined in
 
-[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/Collection.ts#L20)
+[Collection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/Collection.ts#L20)

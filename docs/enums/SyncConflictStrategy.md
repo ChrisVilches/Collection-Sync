@@ -24,7 +24,7 @@ into the parent.
 
 #### Defined in
 
-[types/SyncTypes.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/types/SyncTypes.ts#L8)
+[types/SyncTypes.ts:8](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/types/SyncTypes.ts#L8)
 
 ___
 
@@ -36,7 +36,7 @@ Ignore conflicting items (do nothing about them).
 
 #### Defined in
 
-[types/SyncTypes.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/types/SyncTypes.ts#L14)
+[types/SyncTypes.ts:14](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/types/SyncTypes.ts#L14)
 
 ___
 
@@ -48,7 +48,7 @@ Abort sync if there's a conflicting item in the item set to sync (i.e. sync all 
 
 #### Defined in
 
-[types/SyncTypes.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/types/SyncTypes.ts#L11)
+[types/SyncTypes.ts:11](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/types/SyncTypes.ts#L11)
 
 ___
 
@@ -60,4 +60,4 @@ Syncs the items in order until there's a conflict.
 
 #### Defined in
 
-[types/SyncTypes.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/2e239a4/src/types/SyncTypes.ts#L17)
+[types/SyncTypes.ts:17](https://github.com/ChrisVilches/Collection-Sync/blob/618707f/src/types/SyncTypes.ts#L17)
