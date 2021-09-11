@@ -44,6 +44,11 @@ abstract class SyncItem {
     this._document = document;
     this._updatedAt = updatedAt;
   }
+
+  equals(other: SyncItem | undefined): boolean{
+    if(!other) return false;
+    return this.updatedAt.getTime() == other.updatedAt.getTime();
+  }
 }
 
 export default SyncItem;

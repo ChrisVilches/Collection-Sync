@@ -2,9 +2,8 @@ import SyncItem from "./SyncItem";
 import { SyncConflictStrategy } from "./types/SyncTypes";
 
 class ConflictPolicy {
-  // TODO: Also adding a way to customize the comparison would be nice but not urgent.
   static itemsSameVersion(item1: SyncItem, item2: SyncItem) {
-    return item1.updatedAt.getTime() == item2.updatedAt.getTime();
+    return item1.equals(item2);
   }
 
   static shouldSyncItem(conflict: boolean, conflictStrategy: SyncConflictStrategy, stoppedAdding: boolean): boolean {

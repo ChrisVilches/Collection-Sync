@@ -83,15 +83,19 @@ class Synchronizer{
 
       const conflict = ConflictPolicy.isConflict(this._lastSyncAt, item, objectToCompare);
 
-      if(ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)){
+      // TODO: This should be part of the inputs of "shouldSyncItem", and perhaps other methods too.
+      //       (Instead of adding it to the if statement).
+      const sameVersion = item.equals(objectToCompare);
+
+      if(sameVersion || ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)){
         this._ignoredItems.push(item);
       }
 
-      if(ConflictPolicy.shouldSyncItem(conflict, this._options.conflictStrategy, stopAdding)){
+      if(!sameVersion && ConflictPolicy.shouldSyncItem(conflict, this._options.conflictStrategy, stopAdding)){
         this._itemsToSync.push(item);
       }
 
-      if(ConflictPolicy.shouldHandleAsConflict(conflict, this._options.conflictStrategy)){
+      if(!sameVersion && ConflictPolicy.shouldHandleAsConflict(conflict, this._options.conflictStrategy)){
         this._conflictItems.push(item);
       }
 

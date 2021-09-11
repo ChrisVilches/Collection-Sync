@@ -379,6 +379,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     // TODO: Add more similar examples. Add examples with multiple slaves, etc.
+    // NOTE: Really verbose, but keep it because it helped me fix a massive bug.
     test("real life bi-directional example", async () => {
       await master.syncBatch([makeItem(1, "2030/02/01")]);
       await master.syncBatch([makeItem(2, "2030/02/02")]);
@@ -390,10 +391,15 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true);
 
       await slave.sync(SyncOperation.Fetch, 100);
+
+      // Considers the initial documents added in the mock.
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(6);
+      expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2001/02/01")); // Default.
       await slave.sync(SyncOperation.Post, 100);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(0);
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/02/05"));
-      // expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2030/02/01"));
-      // TODO: I think status should actually be "committed" or something like that (more user friendly).
+      expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2030/02/05"));
+
       expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
       expect(slave.lastSynchronizer?.successfullyCommitted).toBe(true);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
@@ -401,17 +407,14 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
       let itemsToPost = await slave.itemsToSync(SyncOperation.Post, 100);
       expect(itemsToPost).toHaveLength(0);
-      //const itemsInMaster = await master.findByIds(itemsToPost.map(x => x.id));
-      //expect(itemsToPost.map(x => x.updatedAt).sort()).toEqual(itemsInMaster.map(x => x.updatedAt).sort());
 
       await master.syncBatch([makeItem(6, "2030/06/02")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true);
 
       await slave.sync(SyncOperation.Fetch, 100);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(1);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
 
-      // This is probably because needsSync does not ignore non-updated items like .sync does,
-      // it only uses the data to do a quick check. So it needs to post the object it just fetched.
       expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
       itemsToPost = await slave.itemsToSync(SyncOperation.Post, 100);
       expect(itemsToPost).toHaveLength(1);
@@ -432,6 +435,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
 
       await slave.sync(SyncOperation.Post, 100);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(1);
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2030/11/05"));
       expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/11/05"));
@@ -439,19 +443,24 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
 
       await slave.sync(SyncOperation.Fetch, 100);
-      expect(await slave?.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(0);
+      expect(await slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
       await slave.sync(SyncOperation.Post, 100);
-      expect(await slave?.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);//also test items that were synced.
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(0);
+      expect(await slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+
       await slave.sync(SyncOperation.Fetch, 100);
-      expect(await slave?.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(0);
+      expect(await slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+
       await slave.sync(SyncOperation.Post, 100);
-      expect(await slave?.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(await slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect(slave.lastSynchronizer?.itemsToSync).toHaveLength(0);
 
       expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/11/05"));
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/11/05"));
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
       expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
-
     });
 
     xtest(".sync when items are not sorted correctly", () => {
