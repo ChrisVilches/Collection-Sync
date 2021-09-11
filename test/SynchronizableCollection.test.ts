@@ -370,12 +370,12 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".itemsNewerThan (result sorted by date ASC)", async () => {
-      const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"), 100, false);
+      const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"), 100);
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7, 1, 5, 9, 8]);
     });
 
     test(".itemsNewerThan (result sorted by date ASC) with limit", async () => {
-      const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"), 3, false);
+      const itemIds = await collectionManyItems.itemsNewerThan(new Date("2015/06/02"), 3);
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7]);
     });
 
@@ -427,13 +427,12 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(itemsToPost.map(x => x.updatedAt).sort()).toEqual(itemsInMaster.map(x => x.updatedAt).sort());
 
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
-      expect((await master.latestUpdatedItem(false))?.updatedAt).toEqual(new Date("2030/06/02"));
+      expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/06/02"));
 
       const newOwnItem = makeItem(7777, "2030/11/05");
-      newOwnItem.taint();
       await slave.syncBatch([newOwnItem]);
       expect((await slave.lastFromParent_ONLY_FOR_TESTING())?.updatedAt).toEqual(new Date("2030/06/02"));
-      expect((await master.latestUpdatedItem(false))?.updatedAt).toEqual(new Date("2030/06/02"));
+      expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/06/02"));
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
       expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
@@ -441,7 +440,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       await slave.sync(SyncOperation.Post, 100);
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2030/11/05"));
-      expect((await master.latestUpdatedItem(false))?.updatedAt).toEqual(new Date("2030/11/05"));
+      expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/11/05"));
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true); // Last fetch was a long time ago.
       expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
 
@@ -454,7 +453,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       await slave.sync(SyncOperation.Post, 100);
       expect(await slave?.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
 
-      expect((await master.latestUpdatedItem(false))?.updatedAt).toEqual(new Date("2030/11/05"));
+      expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/11/05"));
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/11/05"));
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
       expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
@@ -469,12 +468,12 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
 const collectionInitFns = [
   (s?: CollectionSyncMetadata) => new SynchronizableArray(s),
-  //(s?: CollectionSyncMetadata) => new SynchronizableNeDB(s),
+  (s?: CollectionSyncMetadata) => new SynchronizableNeDB(s),
 ];
 
 const syncMetadataInitFns: (() => CollectionSyncMetadata)[] = [
   () => new BasicSyncMetadata(new Date("2020/02/01"), new Date("2001/02/01")),
-  //() => new JsonFileSyncMetadata("./tmp/", new Date("2020/02/01"), new Date("2001/02/01"))
+  () => new JsonFileSyncMetadata("./tmp/", new Date("2020/02/01"), new Date("2001/02/01"))
 ];
 
 // Test all combinations of class implementations.

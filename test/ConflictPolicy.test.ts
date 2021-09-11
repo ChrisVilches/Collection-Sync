@@ -56,13 +56,19 @@ describe("ConflictPolicy", () => {
   });
 
   test(".isConflict", () => {
-    expect(ConflictPolicy.isConflict(new Date("2020/01/10"), makeItem("2020/01/10"))).toBe(false);
-    expect(ConflictPolicy.isConflict(new Date("2020/01/11"), makeItem("2020/01/10"))).toBe(false);
-    expect(ConflictPolicy.isConflict(new Date("2020/01/05"), makeItem("2020/01/10"))).toBe(true);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/10"), makeItem("2020/01/10"), makeItem("2020/01/10"))).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/11"), makeItem("2020/01/10"), makeItem("2020/01/10"))).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/05"), makeItem("2020/01/10"), makeItem("2020/01/10"))).toBe(false);
 
-    expect(ConflictPolicy.isConflict(new Date("2020/01/05"), undefined)).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/10"), makeItem("2020/01/10"), makeItem("2020/01/15"))).toBe(true);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/11"), makeItem("2020/01/10"), makeItem("2020/01/08"))).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/11"), makeItem("2020/01/10"), makeItem("2020/01/11"))).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/11"), makeItem("2020/01/16"), makeItem("2020/01/11"))).toBe(false);
+    expect(ConflictPolicy.isConflict(new Date("2020/01/05"), makeItem("2020/01/10"), makeItem("2020/01/12"))).toBe(true);
+
+    expect(ConflictPolicy.isConflict(new Date("2020/01/05"), makeItem("2020/01/10"), undefined)).toBe(false);
     expect(ConflictPolicy.isConflict(undefined, makeItem("2020/01/10"))).toBe(false);
-    expect(ConflictPolicy.isConflict(undefined, undefined)).toBe(false);
+    expect(ConflictPolicy.isConflict(undefined, makeItem("2020/01/10"), undefined)).toBe(false);
   });
 
   test(".shouldSetStatusAsConflict", () => {

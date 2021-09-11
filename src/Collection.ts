@@ -23,12 +23,12 @@ interface Collection extends IInitializable {
    * The list MUST be ordered by `updatedAt ASC`, otherwise an exception will be thrown (no syncing
    * will be executed).
   */
-  itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean): Promise<SyncItem[]> | SyncItem[];
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]> | SyncItem[];
 
   /**
    * Gets the highest `updateAt` date in the collection.
   */
-  latestUpdatedItem(onlyDirtyItems: boolean): Promise<SyncItem | undefined> | SyncItem | undefined;
+  latestUpdatedItem(): Promise<SyncItem | undefined> | SyncItem | undefined;
 
   // TODO: For commit and rollback, maybe adding "items that were actually synced" (successfully)
   //       would be great too. This is kind of difficult to implement because that would require to

@@ -7,7 +7,6 @@ abstract class SyncItem {
   private _updatedAt: Date;
   private _document: any;
   private _action: SyncItemAction;
-  private _dirty: boolean;
 
   get id(): DocId {
     return this._id;
@@ -19,10 +18,6 @@ abstract class SyncItem {
 
   get document(): any {
     return this._document;
-  }
-
-  get dirty(): boolean {
-    return this._dirty;
   }
 
   /** Determines whether the item should be updated or not. */
@@ -43,20 +38,11 @@ abstract class SyncItem {
     this._document = document;
     this._updatedAt = updatedAt;
     this._action = action;
-    this._dirty = false;
   }
 
   update(document: any, updatedAt: Date) {
     this._document = document;
     this._updatedAt = updatedAt;
-  }
-
-  taint(): void {
-    this._dirty = true;
-  }
-
-  untaint(): void {
-    this._dirty = false;
   }
 }
 

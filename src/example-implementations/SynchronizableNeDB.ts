@@ -35,13 +35,8 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean = false): Promise<SyncItem[]>{
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]>{
     let where = !date ? {} : { updatedAt: { $gt: date } };
-    throw new Error("not testing this one for now. remove this error when u feel ready")
-
-    if(onlyDirtyItems){
-      where = Object.assign(where, { dirty: 1 });
-    }
 
     return new Promise((resolve, reject) => {
       this.db?.find(where).sort({ updatedAt: 1 }).limit(limit).exec((err, docs) => {
@@ -97,10 +92,9 @@ class SynchronizableNeDB extends SynchronizableCollection{
     return result;
   }
 
-  latestUpdatedItem(onlyDirtyItems: boolean): Promise<SyncItem | undefined>{
+  latestUpdatedItem(): Promise<SyncItem | undefined>{
     return new Promise((resolve, reject) => {
-      const where = onlyDirtyItems ? { dirty: 1 } : {};
-      this.db?.find(where).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
+      this.db?.find({}).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
         if(err) return reject(err);
         resolve(this.makeItem(docs[0]));
       });

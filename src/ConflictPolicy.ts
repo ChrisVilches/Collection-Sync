@@ -2,6 +2,11 @@ import { SyncItem } from ".";
 import { SyncConflictStrategy } from "./types/SyncTypes";
 
 class ConflictPolicy{
+  // TODO: Also adding a way to customize the comparison would be nice but not urgent.
+  static itemsSameVersion(item1: SyncItem, item2: SyncItem){
+    return item1.updatedAt.getTime() == item2.updatedAt.getTime();
+  }
+
   static shouldSyncItem(conflict: boolean, conflictStrategy: SyncConflictStrategy, stoppedAdding: boolean): boolean{
     if(stoppedAdding) return false;
     return conflictStrategy == SyncConflictStrategy.Force || !conflict;
@@ -21,23 +26,10 @@ class ConflictPolicy{
     return conflict;
   }
 
-  /**
-   * This one is a bit tricky to understand maybe, so explanation:
-   * This method is being executed only for items that are going to be compared. And only items that
-   * are not yet synced are obtained from the source collection. Not yet synced means "updatedAt higher
-   * than the collection last sync date". Therefore, the item from the source collection has been updated
-   * after the last sync, and there'll be a conflict if also the destination collection item has changed
-   * since the last sync date (i.e. higher than the source collection last sync date).
-   * 
-   * Bottom line, it's only necessary to check whether the object from the destination collection has been
-   * updated after the last sync. That means there's a conflict.
-   * 
-   * Also, keep in mind that the item from the source collection also has updatedAt > last sync date
-   * (which is the reason it was fetched for syncing in the first place).
-  */
-  static isConflict(collectionLastSyncAt: Date | undefined, itemToCompare?: SyncItem): boolean{
+  static isConflict(collectionLastSyncAt: Date | undefined, item: SyncItem, itemToCompare?: SyncItem): boolean{
     if(!itemToCompare) return false;
     if(!collectionLastSyncAt) return false;
+    if(ConflictPolicy.itemsSameVersion(item, itemToCompare)) return false;
     return itemToCompare.updatedAt > collectionLastSyncAt;
   }
 

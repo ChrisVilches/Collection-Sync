@@ -28,8 +28,8 @@ abstract class SynchronizableCollection implements Collection {
   abstract countAll(): number | Promise<number>;
   abstract findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]>;
   abstract syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]>;
-  abstract itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean): SyncItem[] | Promise<SyncItem[]>;
-  abstract latestUpdatedItem(onlyDirtyItems: boolean): SyncItem | Promise<SyncItem | undefined> | undefined;
+  abstract itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]>;
+  abstract latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined;
   abstract initialize(): Promise<void>;
 
   /**
@@ -77,14 +77,14 @@ abstract class SynchronizableCollection implements Collection {
   }
 
   lastFromParent_ONLY_FOR_TESTING(){
-    return this._parent?.latestUpdatedItem(false);
+    return this._parent?.latestUpdatedItem();
   }
 
   async needsSync(syncOperation: SyncOperation): Promise<boolean> {
     if (!this._parent) return false;
 
     const latestUpdatedItem = await (
-      syncOperation == SyncOperation.Post ? this.latestUpdatedItem(true) : this._parent.latestUpdatedItem(false)
+      syncOperation == SyncOperation.Post ? this.latestUpdatedItem() : this._parent.latestUpdatedItem()
     );
 
     // No data to sync.
@@ -96,11 +96,11 @@ abstract class SynchronizableCollection implements Collection {
   }
 
   private async itemsToFetch(lastSyncAt: Date | undefined, limit: number): Promise<SyncItem[]> {
-    return (this._parent as Collection).itemsNewerThan(lastSyncAt, limit, false);
+    return (this._parent as Collection).itemsNewerThan(lastSyncAt, limit);
   }
 
   private async itemsToPost(lastSyncAt: Date | undefined, limit: number): Promise<SyncItem[]> {
-    return await this.itemsNewerThan(lastSyncAt, limit, true);
+    return await this.itemsNewerThan(lastSyncAt, limit);
   }
 
   /** Gets list of items that can be synced (to either fetch or post). */
