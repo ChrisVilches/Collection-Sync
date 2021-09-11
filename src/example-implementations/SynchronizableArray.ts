@@ -35,7 +35,7 @@ class SynchronizableArray extends SynchronizableCollection{
                                   .filter(item => date < item.updatedAt);
 
     if(onlyDirtyItems){
-      filteredArray = filteredArray.filter(item => item.dirty);
+      //filteredArray = filteredArray.filter(item => item.dirty);
     }
 
     return R.take(limit, filteredArray);
@@ -80,7 +80,7 @@ class SynchronizableArray extends SynchronizableCollection{
     let array: SyncItem[] = this.array;
     
     if(onlyDirtyItems){
-      array = array.filter(item => item.dirty);
+      //array = array.filter(item => item.dirty);
     }
 
     if(array.length == 0) return undefined;

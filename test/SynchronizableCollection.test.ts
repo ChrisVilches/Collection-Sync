@@ -402,28 +402,30 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
       expect(slave.lastSynchronizer?.successfullyCommitted).toBe(true);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
-
-      // TODO: This one is a massive problem... it seems there's a huge issue with the library.
-      //       Maybe a simple way to fix this is by changing just the method that fetches
-      //       items that need to be synced, but how?
-      //
-      //       (What to fix: Right after a fetch, it shouldn't need to post what it just fetched).
-      //       Note that doing unnecessary stuff would be quite expensive for local disk -> Amazon S3 sync,
-      //       so it'd be great if this was completely optimized to avoid unnecessary syncs.
-      //
-      //       Another way to fix this, is by telling the user they should implement a mechanism like:
-      //       was the record touched after fetching it? If it's dirty, then it should be a target for
-      //       syncing. In other words, not just the updatedAt but also some other flag.
-      //
-      //       That might be a way to fix this issue. Needs testing.
       expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
+
+      let itemsToPost = await slave.itemsToSync(SyncOperation.Post, 100);
+      expect(itemsToPost).toHaveLength(0);
+      //const itemsInMaster = await master.findByIds(itemsToPost.map(x => x.id));
+      //expect(itemsToPost.map(x => x.updatedAt).sort()).toEqual(itemsInMaster.map(x => x.updatedAt).sort());
 
       await master.syncBatch([makeItem(6, "2030/06/02")]);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(true);
 
       await slave.sync(SyncOperation.Fetch, 100);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
-      expect(await slave.needsSync(SyncOperation.Post)).toBe(false);
+
+      // This is probably because needsSync does not ignore non-updated items like .sync does,
+      // it only uses the data to do a quick check. So it needs to post the object it just fetched.
+      expect(await slave.needsSync(SyncOperation.Post)).toBe(true);
+      itemsToPost = await slave.itemsToSync(SyncOperation.Post, 100);
+      expect(itemsToPost).toHaveLength(1);
+      expect(itemsToPost[0].updatedAt).toEqual(new Date("2030/06/02"));
+      let itemsInMaster = await master.findByIds(itemsToPost.map(x => x.id));
+
+      // But they are actually equal. So they should be ignored (needsSync doesn't do that yet).
+      expect(itemsToPost.map(x => x.updatedAt).sort()).toEqual(itemsInMaster.map(x => x.updatedAt).sort());
+
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
       expect((await master.latestUpdatedItem(false))?.updatedAt).toEqual(new Date("2030/06/02"));
 

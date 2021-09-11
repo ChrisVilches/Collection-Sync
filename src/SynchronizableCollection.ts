@@ -91,9 +91,6 @@ abstract class SynchronizableCollection implements Collection {
     if (latestUpdatedItem == null) return false;
 
     const lastAt = await this.syncMetadata.getLastAt(syncOperation);
-    console.log("syncOperation", syncOperation == SyncOperation.Fetch ? "Fetch" : "Post")
-    console.log("lastAt", lastAt)
-    console.log("latestUpdatedItem.updatedAt", latestUpdatedItem.updatedAt)
     if (!lastAt) return true;
     return lastAt < latestUpdatedItem.updatedAt;
   }
@@ -148,7 +145,6 @@ abstract class SynchronizableCollection implements Collection {
     } finally {
       if (SyncPolicy.shouldRollBack(synchronizer)) {
         await synchronizer.rollback();
-        console.log(synchronizer.syncStatus)
       }
 
       await this.cleanUp(synchronizer);
