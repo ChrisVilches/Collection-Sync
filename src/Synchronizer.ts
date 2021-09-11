@@ -81,6 +81,21 @@ class Synchronizer{
       const item = this._unfilteredItems[i];
       const objectToCompare: SyncItem | undefined = compareObjects[item.id];
 
+      // TODO: new shit. Works? needs to be fixed? lol.
+      //       it's probably still necessary to use the date of one of these ones
+      //       in order to update the last sync date (because these items were checked,
+      //       so for the next sync there's no need to check them again).
+      //       Also, if this works, then there would be a limitation were local.updatedAt == server.updatedAt
+      //       items are skipped. Not a big deal because it'd be rare that they are the same (specially the
+      //       milliseconds).
+      //       Also if this is enough, consider removing the "dirty, taint, untaint" functionality.
+      //
+      //       Also adding a way to customize the comparison would be nice but not urgent.
+      if(objectToCompare && objectToCompare.updatedAt == item.updatedAt){
+        this._ignoredItems.push(item);
+        continue; // <--- this continue should be removed and instead make all "should" methods independant.
+      }
+
       const conflict = ConflictPolicy.isConflict(this._lastSyncAt, objectToCompare);
 
       if(ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)){

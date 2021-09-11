@@ -4,7 +4,6 @@ import SynchronizableCollection from "../SynchronizableCollection";
 import BasicSyncMetadata from "./BasicSyncMetadata";
 import CollectionSyncMetadata from "../CollectionSyncMetadata";
 import DocId from "../types/DocId";
-import Synchronizer from "../Synchronizer";
 import NeDB from "nedb";
 
 /** Since some databases auto-generate an ID value (such as NeDB), a custom ID attribute name is defined to store a custom ID value in the document. */
@@ -36,8 +35,13 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]>{
-    const where = !date ? {} : { updatedAt: { $gt: date } };
+  itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean = false): Promise<SyncItem[]>{
+    let where = !date ? {} : { updatedAt: { $gt: date } };
+    throw new Error("not testing this one for now. remove this error when u feel ready")
+
+    if(onlyDirtyItems){
+      where = Object.assign(where, { dirty: 1 });
+    }
 
     return new Promise((resolve, reject) => {
       this.db?.find(where).sort({ updatedAt: 1 }).limit(limit).exec((err, docs) => {
@@ -93,9 +97,10 @@ class SynchronizableNeDB extends SynchronizableCollection{
     return result;
   }
 
-  latestUpdatedItem(): Promise<SyncItem | undefined>{
+  latestUpdatedItem(onlyDirtyItems: boolean): Promise<SyncItem | undefined>{
     return new Promise((resolve, reject) => {
-      this.db?.find({}).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
+      const where = onlyDirtyItems ? { dirty: 1 } : {};
+      this.db?.find(where).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
         if(err) return reject(err);
         resolve(this.makeItem(docs[0]));
       });

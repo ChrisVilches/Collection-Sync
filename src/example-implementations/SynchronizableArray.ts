@@ -21,12 +21,22 @@ class SynchronizableArray extends SynchronizableCollection{
     return this.array.length;
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number): SyncItem[]{
+  // TODO: Ok, this method can be changed to "items to sync", and the user implements it,
+  //       but he's dumb so let's give him tips about what and how to implement.
+  //
+  //       And in that case, then remove "onlyDirtyItems" flag, and simply tell them to put that flag
+  //       but that would require one method for posting (use the flag), and another method without
+  //       which probably wouldn't require that flag. Or maybe? I don't know lol (MUST THINK AND TEST!!!!!).
+  itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean = false): SyncItem[]{
     if(!date){
       return this.array;
     }
     let filteredArray = this.array.sort((a: SyncItem, b: SyncItem) => (a.updatedAt as any) - (b.updatedAt as any))
                                   .filter(item => date < item.updatedAt);
+
+    if(onlyDirtyItems){
+      filteredArray = filteredArray.filter(item => item.dirty);
+    }
 
     return R.take(limit, filteredArray);
   }
@@ -61,13 +71,24 @@ class SynchronizableArray extends SynchronizableCollection{
     return items.map(this.upsert.bind(this));
   }
 
-  latestUpdatedItem(): SyncItem | undefined{
-    if(this.array.length == 0) return undefined;
+  // TODO: Refactor all this "onlyDirtyItems" stuff, and make it a more elegant method name.
+  //       In a way that the user has to figure out how to implement it.
+  //       Also onlyDirtyItems is set differently for slave and parent. Remember that many
+  //       slaves can push to parent, therefore just because it's not dirty it doesn't mean
+  //       other slaves don't need that data.
+  latestUpdatedItem(onlyDirtyItems: boolean): SyncItem | undefined{
+    let array: SyncItem[] = this.array;
+    
+    if(onlyDirtyItems){
+      array = array.filter(item => item.dirty);
+    }
 
-    let latest = this.array[0];
+    if(array.length == 0) return undefined;
 
-    for(let i=0; i<this.array.length; i++){
-      let curr = this.array[i];
+    let latest = array[0];
+
+    for(let i=0; i<array.length; i++){
+      let curr = array[i];
       if(latest.updatedAt < curr.updatedAt){
         latest = curr;
       }

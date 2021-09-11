@@ -38,6 +38,8 @@ class ConflictPolicy{
   static isConflict(collectionLastSyncAt: Date | undefined, itemToCompare?: SyncItem): boolean{
     if(!itemToCompare) return false;
     if(!collectionLastSyncAt) return false;
+    if(itemToCompare.updatedAt > collectionLastSyncAt)
+      console.log(`CONFLICT (comparing with item ID ${itemToCompare.id})`, itemToCompare.updatedAt, ">",  collectionLastSyncAt)
     return itemToCompare.updatedAt > collectionLastSyncAt;
   }
 

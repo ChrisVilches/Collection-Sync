@@ -28,8 +28,8 @@ abstract class SynchronizableCollection implements Collection {
   abstract countAll(): number | Promise<number>;
   abstract findByIds(ids: DocId[]): SyncItem[] | Promise<SyncItem[]>;
   abstract syncBatch(items: SyncItem[]): SyncItem[] | Promise<SyncItem[]>;
-  abstract itemsNewerThan(date: Date | undefined, limit: number): SyncItem[] | Promise<SyncItem[]>;
-  abstract latestUpdatedItem(): SyncItem | Promise<SyncItem | undefined> | undefined;
+  abstract itemsNewerThan(date: Date | undefined, limit: number, onlyDirtyItems: boolean): SyncItem[] | Promise<SyncItem[]>;
+  abstract latestUpdatedItem(onlyDirtyItems: boolean): SyncItem | Promise<SyncItem | undefined> | undefined;
   abstract initialize(): Promise<void>;
 
   /**
@@ -37,7 +37,7 @@ abstract class SynchronizableCollection implements Collection {
    * If this method returns `false`, syncing will be aborted, and will continue only if
    * the return value is `true`.
    */
-  async preExecuteSync(_synchronizer: Synchronizer): Promise<boolean>{
+  async preExecuteSync(_synchronizer: Synchronizer): Promise<boolean> {
     return true;
   }
 
@@ -45,7 +45,7 @@ abstract class SynchronizableCollection implements Collection {
    * Executes before committing the data. If this method returns `false`, then committing will
    * be aborted. It will only commit the data if the return value is `true`.
   */
-  async preCommitSync(_synchronizer: Synchronizer): Promise<boolean>{
+  async preCommitSync(_synchronizer: Synchronizer): Promise<boolean> {
     return true;
   }
 
@@ -71,32 +71,39 @@ abstract class SynchronizableCollection implements Collection {
     return this._parent;
   }
 
-  get lastSynchronizer(): Synchronizer | undefined{
-    if(this.synchronizers.length == 0) return undefined;
+  get lastSynchronizer(): Synchronizer | undefined {
+    if (this.synchronizers.length == 0) return undefined;
     return this.synchronizers[this.synchronizers.length - 1];
+  }
+
+  lastFromParent_ONLY_FOR_TESTING(){
+    return this._parent?.latestUpdatedItem(false);
   }
 
   async needsSync(syncOperation: SyncOperation): Promise<boolean> {
     if (!this._parent) return false;
 
     const latestUpdatedItem = await (
-      syncOperation == SyncOperation.Post ? this.latestUpdatedItem() : this._parent.latestUpdatedItem()
+      syncOperation == SyncOperation.Post ? this.latestUpdatedItem(true) : this._parent.latestUpdatedItem(false)
     );
 
     // No data to sync.
     if (latestUpdatedItem == null) return false;
 
     const lastAt = await this.syncMetadata.getLastAt(syncOperation);
+    console.log("syncOperation", syncOperation == SyncOperation.Fetch ? "Fetch" : "Post")
+    console.log("lastAt", lastAt)
+    console.log("latestUpdatedItem.updatedAt", latestUpdatedItem.updatedAt)
     if (!lastAt) return true;
     return lastAt < latestUpdatedItem.updatedAt;
   }
 
   private async itemsToFetch(lastSyncAt: Date | undefined, limit: number): Promise<SyncItem[]> {
-    return (this._parent as Collection).itemsNewerThan(lastSyncAt, limit);
+    return (this._parent as Collection).itemsNewerThan(lastSyncAt, limit, false);
   }
 
   private async itemsToPost(lastSyncAt: Date | undefined, limit: number): Promise<SyncItem[]> {
-    return await this.itemsNewerThan(lastSyncAt, limit);
+    return await this.itemsNewerThan(lastSyncAt, limit, true);
   }
 
   /** Gets list of items that can be synced (to either fetch or post). */
@@ -136,12 +143,12 @@ abstract class SynchronizableCollection implements Collection {
 
     try {
       await this.syncAux(synchronizer, syncOperation);
-    } catch(e) {
-      console.log(e)
+    } catch (e) {
       synchronizer.abort();
     } finally {
       if (SyncPolicy.shouldRollBack(synchronizer)) {
         await synchronizer.rollback();
+        console.log(synchronizer.syncStatus)
       }
 
       await this.cleanUp(synchronizer);
@@ -152,13 +159,13 @@ abstract class SynchronizableCollection implements Collection {
 
   private async syncAux(synchronizer: Synchronizer, syncOperation: SyncOperation): Promise<void> {
     await synchronizer.prepareSyncData();
-    
-    if(!await this.preExecuteSync(synchronizer)) return;
+
+    if (!await this.preExecuteSync(synchronizer)) return;
 
     await synchronizer.executeSync();
 
-    if(SyncPolicy.shouldCommit(synchronizer.syncStatus)){
-      if(await this.preCommitSync(synchronizer)){
+    if (SyncPolicy.shouldCommit(synchronizer.syncStatus)) {
+      if (await this.preCommitSync(synchronizer)) {
         await synchronizer.commit();
       }
     }
