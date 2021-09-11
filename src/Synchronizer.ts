@@ -131,7 +131,7 @@ class Synchronizer{
     // Free memory after using it.
     
     // TODO: Do this micro optimization.
-    //this.destCollection = undefined;
+    // this.destCollection = undefined;
   }
 
   /** Executes a commit. If it does not succeed, status is set to `SyncStatus.UnexpectedError`. */

@@ -76,7 +76,7 @@ abstract class SynchronizableCollection implements Collection {
     return this.synchronizers[this.synchronizers.length - 1];
   }
 
-  lastFromParent_ONLY_FOR_TESTING(){
+  lastFromParent_ONLY_FOR_TESTING() {
     return this._parent?.latestUpdatedItem();
   }
 
