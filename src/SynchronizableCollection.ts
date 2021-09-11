@@ -76,10 +76,24 @@ abstract class SynchronizableCollection implements Collection {
     return this.synchronizers[this.synchronizers.length - 1];
   }
 
-  lastFromParent_ONLY_FOR_TESTING() {
-    return this._parent?.latestUpdatedItem();
-  }
-
+  /**
+   * Determines if synchronization is needed. This only performs a simple date check
+   * to see if the source collection has at least one item that's newer than the last
+   * sync date. This doesn't determine if items are actually different from those in the
+   * destination collection. This means that even if this method returns `true`, there may
+   * be occasions where no item is actually synced because they were identical. Checking which
+   * items have actually changed is more expensive, and usually it's recommended to be done
+   * while executing the actual sync, and in small batches (the last sync date is updated after
+   * every batch, meaning that after enough sync operations, this method will begin to return `false`).
+   *
+   * One example of this can be seen when the local collection posts an item to the parent collection,
+   * updating the last post date, but not the fetch date. Then, when checking if fetch is necessary,
+   * it will return `true` because it just posted a new object and only based on dates, it will determine
+   * that the item has not been fetched yet. However when executing the fetch operation, all items
+   * will be ignored because that new item from the server collection is the same as the one in the
+   * local collection (since it was the local collection which posted it in the first place). This happens
+   * because last fetch and post dates are updated individually.
+  */
   async needsSync(syncOperation: SyncOperation): Promise<boolean> {
     if (!this._parent) return false;
 

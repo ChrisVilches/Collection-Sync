@@ -1,4 +1,4 @@
-import { SyncItem } from ".";
+import SyncItem from "./SyncItem";
 import { SyncConflictStrategy } from "./types/SyncTypes";
 
 class ConflictPolicy {

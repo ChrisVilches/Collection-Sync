@@ -365,8 +365,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       //       and then manually fixing conflicts.
       expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2028/01/01"));
       
-      // TODO: Remake this test. I need to add the boolean argument now.
-      // expect((await slave.latestUpdatedItem())?.updatedAt).toEqual(new Date("2028/01/01"));
+      expect((await slave.latestUpdatedItem())?.updatedAt).toEqual(new Date("2028/01/01"));
     });
 
     test(".itemsNewerThan (result sorted by date ASC)", async () => {
@@ -379,12 +378,8 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7]);
     });
 
-    // TODO: Even after I fix this problem, several more examples are needed!
-    //       With multiple slaves from the same parent, etc. Please don't kill this project
-    //       by leaving it unfinished. I won't understand the code if I revisit it a few months
-    //       later. But if the tests are done, at least I'll be able to modify code and check if
-    //       it still works.
-    test("real life bi-directional example tempcomment", async () => {
+    // TODO: Add more similar examples. Add examples with multiple slaves, etc.
+    test("real life bi-directional example", async () => {
       await master.syncBatch([makeItem(1, "2030/02/01")]);
       await master.syncBatch([makeItem(2, "2030/02/02")]);
       await master.syncBatch([makeItem(3, "2030/02/03")]);
@@ -431,7 +426,6 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
       const newOwnItem = makeItem(7777, "2030/11/05");
       await slave.syncBatch([newOwnItem]);
-      expect((await slave.lastFromParent_ONLY_FOR_TESTING())?.updatedAt).toEqual(new Date("2030/06/02"));
       expect((await master.latestUpdatedItem())?.updatedAt).toEqual(new Date("2030/06/02"));
       expect(await slave.syncMetadata.getLastFetchAt()).toEqual(new Date("2030/06/02"));
       expect(await slave.needsSync(SyncOperation.Fetch)).toBe(false);
