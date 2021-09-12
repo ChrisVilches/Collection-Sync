@@ -63,6 +63,9 @@ abstract class SynchronizableCollection implements Collection {
   async cleanUp(_synchronizer: Synchronizer): Promise<void> {
   }
 
+  // TODO: It'd be better if the method was something like .attachToParentCollection(X) or something
+  //       that looks more formal. Currently, a parent is added by doing .parent = X.
+  //       Note that if this is implemented, README must also be changed.
   set parent(p: Collection | undefined) {
     this._parent = p;
   }

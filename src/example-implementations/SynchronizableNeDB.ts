@@ -9,24 +9,24 @@ import NeDB from "nedb";
 /** Since some databases auto-generate an ID value (such as NeDB), a custom ID attribute name is defined to store a custom ID value in the document. */
 const ID_ATTRIBUTE_NAME: string = "documentId";
 
-class SynchronizableNeDB extends SynchronizableCollection{
-  private db?: NeDB;
+class SynchronizableNeDB extends SynchronizableCollection {
+  protected db?: NeDB;
 
-  constructor(syncMetadata: CollectionSyncMetadata = new BasicSyncMetadata()){
+  constructor(syncMetadata: CollectionSyncMetadata = new BasicSyncMetadata()) {
     super(syncMetadata);
   }
 
-  async initialize(){
+  async initialize() {
     this.db = new NeDB({ timestampData: false }); // Add timestamp data manually.
   }
 
   /** Creates a SyncItem object starting from a document. It extracts its `ID`, `updatedAt`, and document data to create the object. */
-  makeItem(doc: any): PersonItem | undefined{
-    if(!doc) return undefined;
+  makeItem(doc: any): PersonItem | undefined {
+    if (!doc) return undefined;
     return new PersonItem(doc[ID_ATTRIBUTE_NAME], doc, doc.updatedAt);
   }
 
-  countAll(): Promise<number>{
+  countAll(): Promise<number> {
     return new Promise((resolve, reject) => {
       this.db?.count({}, (err, count) => {
         if (err) return reject(err);
@@ -35,30 +35,30 @@ class SynchronizableNeDB extends SynchronizableCollection{
     });
   }
 
-  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]>{
+  itemsNewerThan(date: Date | undefined, limit: number): Promise<SyncItem[]> {
     let where = !date ? {} : { updatedAt: { $gt: date } };
 
     return new Promise((resolve, reject) => {
       this.db?.find(where).sort({ updatedAt: 1 }).limit(limit).exec((err, docs) => {
-        if(err) return reject(err);
+        if (err) return reject(err);
         docs = docs.map(this.makeItem);
         resolve(docs);
       });
     });
   }
 
-  findByIds(ids: DocId[]): Promise<SyncItem[]>{
+  findByIds(ids: DocId[]): Promise<SyncItem[]> {
     return new Promise((resolve, reject) => {
-      this.db?.find({ [ID_ATTRIBUTE_NAME]: { $in: ids }}, (err: any, docs: any) => {
-        if(err) return reject(err);
+      this.db?.find({ [ID_ATTRIBUTE_NAME]: { $in: ids } }, (err: any, docs: any) => {
+        if (err) return reject(err);
         resolve(docs.map(this.makeItem));
       });
     });
   }
 
-  private executeSyncItem(item: SyncItem): Promise<SyncItem>{
+  private executeSyncItem(item: SyncItem): Promise<SyncItem> {
     return new Promise((resolve, reject) => {
-      if(item.isDelete){
+      if (item.isDelete) {
         // Behavior is untested.
         // In theory it should work right away, but it might be necessary to tweak syncBatch a bit
         // so that it returns upserted items as well as deleted items (e.g. a map with both keys
@@ -74,28 +74,28 @@ class SynchronizableNeDB extends SynchronizableCollection{
         item.document[ID_ATTRIBUTE_NAME] = item.id;
         item.document.updatedAt = item.updatedAt;
         delete item.document._id; // Avoid "You cannot change a document's _id" error (NeDB specific).
-  
+
         this.db?.update({ [ID_ATTRIBUTE_NAME]: item.id }, item.document, { upsert: true }, (err, _numReplaced, _upsert) => {
-          if(err) return reject(err);
+          if (err) return reject(err);
           resolve(item);
         });
       }
     });
   }
 
-  async syncBatch(items: SyncItem[]): Promise<SyncItem[]>{
+  async syncBatch(items: SyncItem[]): Promise<SyncItem[]> {
     const result = [];
-    for(let i=0; i<items.length; i++){
+    for (let i = 0; i < items.length; i++) {
       const synced = await this.executeSyncItem(items[i]);
       result.push(synced);
     }
     return result;
   }
 
-  latestUpdatedItem(): Promise<SyncItem | undefined>{
+  latestUpdatedItem(): Promise<SyncItem | undefined> {
     return new Promise((resolve, reject) => {
       this.db?.find({}).sort({ updatedAt: -1 }).limit(1).exec((err, docs) => {
-        if(err) return reject(err);
+        if (err) return reject(err);
         resolve(this.makeItem(docs[0]));
       });
     });
