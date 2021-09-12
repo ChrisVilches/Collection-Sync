@@ -14,6 +14,8 @@ class Synchronizer {
   private _startDate?: Date;
   private _endDate?: Date;
 
+  private _syncedItems: SyncItem[] = [];
+
   /** List of filtered items (removing conflicts, etc) that actually get sent to the destination collection for syncing. */
   private _itemsToSync: SyncItem[] = [];
   private _ignoredItems: SyncItem[] = []
@@ -57,6 +59,10 @@ class Synchronizer {
 
   get ignoredItems(): SyncItem[] {
     return this._ignoredItems;
+  }
+
+  get syncedItems(): SyncItem[] {
+    return this._syncedItems;
   }
 
   constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions) {
@@ -112,15 +118,24 @@ class Synchronizer {
     // to do that, I will pretend I fetch it, but then modify it again now (that's why it has
     // the current date).
     for (let i = 0; i < ignoredCompareObjects.length; i++) {
+      // This is only necessary to do for the ignore strategy. Other than that, the "ignoredCompareObjects"
+      // list is also populated when two items are the same (therefore not ignored as in "there was a conflict,
+      // but the strategy is to ignore", but as in "they are the same, so ignore (and don't re-push/fetch)").
+      // TODO: Refactor this. In fact, refactor this entire method.
+
+      if (this._options.conflictStrategy != SyncConflictStrategy.Ignore) continue;
       const obj = ignoredCompareObjects[i];
 
       // NOTE: It seems that it's very important to set a real date of fetch/post, not just copy the last
       //       date from the fetched/posted item. There are few situations where copying the date would
       //       result in other slaves not picking up changes.
-      obj.update(obj.document, new Date());
+      obj.update(obj.document, new Date()); // TODO: Unfortunate that it's local time. Make it configurable from outside the class (it will help testing).
 
       this._itemsToSync.push(ignoredCompareObjects[i]);
     }
+
+    // Sadly it's necessary to sort again here.
+    this._itemsToSync = this._itemsToSync.sort((a: SyncItem, b: SyncItem) => (a.updatedAt as any) - (b.updatedAt as any));
 
     //console.log("items to sync", this._itemsToSync)
     if (ConflictPolicy.shouldSetStatusAsConflict(this._conflictItems.length > 0, this._options.conflictStrategy)) {
@@ -208,8 +223,6 @@ class Synchronizer {
   private async syncItems(): Promise<void> {
     if (this._syncStatus == SyncStatus.Conflict) return;
 
-    let syncedItems: SyncItem[] = [];
-
     // NOTE: This status can never be observed, because it will change right away.
     this._syncStatus = SyncStatus.Running;
 
@@ -217,7 +230,7 @@ class Synchronizer {
       this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;
     else if (this._itemsToSync.length > 0) {
       try {
-        syncedItems = await this.destCollection.syncBatch(this._itemsToSync);
+        this._syncedItems = await this.destCollection.syncBatch(this._itemsToSync);
         this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;
       } catch (e) {
         this._syncStatus = SyncStatus.UnexpectedError;
@@ -227,7 +240,7 @@ class Synchronizer {
 
     // Get the highest updateAt, from the synced items + the ignored items (ignored items
     // are also synced, because they need to update its date).
-    this.lastSyncedItem = this.itemHighestUpdatedAt(syncedItems);
+    this.lastSyncedItem = this.itemHighestUpdatedAt(this._syncedItems);
   }
 
   abort() {
@@ -256,7 +269,11 @@ class Synchronizer {
       const prev = items[i - 1];
       const curr = items[i];
 
-      if (prev.updatedAt > curr.updatedAt) return false;
+      if (prev.updatedAt > curr.updatedAt) {
+        console.log("NOT ORDERED")
+        console.log(items)
+        return false;
+      }
     }
 
     return true;

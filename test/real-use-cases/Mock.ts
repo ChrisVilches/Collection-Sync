@@ -1,8 +1,9 @@
 import SynchronizableCollection from "../../src/SynchronizableCollection";
 import SyncItem from "../../src/SyncItem";
 import DocId from "../../src/types/DocId";
-import { SyncOperation } from "../../src/types/SyncTypes";
+import { SyncConflictStrategy, SyncOperation } from "../../src/types/SyncTypes";
 import * as R from "ramda";
+import Synchronizer from "../../src/Synchronizer";
 
 class DummySyncItem extends SyncItem {
   constructor(id: DocId, doc: string, currentDate: Date) {
@@ -19,9 +20,14 @@ class Mock {
   private _currentDate: Date;
   private _slaves: SynchronizableCollection[] = [];
   private _master: SynchronizableCollection;
+  private _lastSync?: Synchronizer;
 
   get slaves(): SynchronizableCollection[] {
     return this._slaves;
+  }
+
+  get lastSync(): Synchronizer | undefined {
+    return this._lastSync;
   }
 
   get master(): SynchronizableCollection {
@@ -55,12 +61,32 @@ class Mock {
 
   async post(slaveIdx: number, limit: number = 10000): Promise<void> {
     const slave = this._slaves[slaveIdx];
-    await slave.sync(SyncOperation.Post, limit);
+    await slave.sync(SyncOperation.Post, limit, { conflictStrategy: SyncConflictStrategy.RaiseError });
+    this._lastSync = slave.lastSynchronizer;
+  }
+
+  async postForce(slaveIdx: number, limit: number = 10000): Promise<void> {
+    const slave = this._slaves[slaveIdx];
+    await slave.sync(SyncOperation.Post, limit, { conflictStrategy: SyncConflictStrategy.Force });
+    this._lastSync = slave.lastSynchronizer;
   }
 
   async fetch(slaveIdx: number, limit: number = 10000): Promise<void> {
     const slave = this._slaves[slaveIdx];
-    await slave.sync(SyncOperation.Fetch, limit);
+    await slave.sync(SyncOperation.Fetch, limit, { conflictStrategy: SyncConflictStrategy.RaiseError });
+    this._lastSync = slave.lastSynchronizer;
+  }
+
+  async fetchUseMaster(slaveIdx: number, limit: number = 10000): Promise<void> {
+    const slave = this._slaves[slaveIdx];
+    await slave.sync(SyncOperation.Fetch, limit, { conflictStrategy: SyncConflictStrategy.Force });
+    this._lastSync = slave.lastSynchronizer;
+  }
+
+  async fetchUseLocal(slaveIdx: number, limit: number = 10000): Promise<void> {
+    const slave = this._slaves[slaveIdx];
+    await slave.sync(SyncOperation.Fetch, limit, { conflictStrategy: SyncConflictStrategy.Ignore });
+    this._lastSync = slave.lastSynchronizer;
   }
 
   /** Verifies that all documents in all databases have the same content,
@@ -106,12 +132,13 @@ class Mock {
 
   private async collectionDocuments(collection: SynchronizableCollection): Promise<SyncItem[]> {
     // Be careful of hardcoded dates. This assumes that all data is newer than year 1900.
-    return collection.itemsNewerThan(new Date("1900/01/01"), 100000);
+    const result = await collection.itemsNewerThan(new Date("1900/01/01"), 100000);
+    return result.map((item: SyncItem) => new DummySyncItem(item.id, item.document.content, item.updatedAt));
   }
 
   /** Increase date to make it future from current. */
   private setNextDate(): void {
-    this._currentDate = new Date(this._currentDate.getTime() + 1);
+    this._currentDate = new Date(this._currentDate.getTime() + 100);
   }
 }
 
