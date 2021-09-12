@@ -6,7 +6,7 @@ import * as R from "ramda";
 import SyncStatus from "./types/SyncStatus";
 import ConflictPolicy from "./ConflictPolicy";
 
-class Synchronizer{
+class Synchronizer {
   /** Used to keep state of sync process. */
   private lastSyncedItem?: SyncItem;
 
@@ -31,43 +31,43 @@ class Synchronizer{
 
   private _alreadyExecuted: boolean = false;
 
-  get successfullyRollbacked(): boolean{
+  get successfullyRollbacked(): boolean {
     return this._rollbacked;
   }
 
-  get successfullyCommitted(): boolean{
+  get successfullyCommitted(): boolean {
     return this.committed;
   }
 
-  get syncStatus(): SyncStatus{
+  get syncStatus(): SyncStatus {
     return this._syncStatus;
   }
 
-  get lastUpdatedAt(): Date | undefined{
+  get lastUpdatedAt(): Date | undefined {
     return this.lastSyncedItem?.updatedAt;
   }
 
-  get itemsToSync(): SyncItem[]{
+  get itemsToSync(): SyncItem[] {
     return this._itemsToSync;
   }
 
-  get conflictItems(): SyncItem[]{
+  get conflictItems(): SyncItem[] {
     return this._conflictItems;
   }
 
-  get ignoredItems(): SyncItem[]{
+  get ignoredItems(): SyncItem[] {
     return this._ignoredItems;
   }
 
-  constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions){
+  constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions) {
     this.destCollection = destCollection;
     this._options = options;
     this._unfilteredItems = items;
     this._lastSyncAt = lastSyncAt;
   }
 
-  async prepareSyncData(): Promise<void>{
-    let compareObjects: {[key in DocId]: SyncItem} = {};
+  async prepareSyncData(): Promise<void> {
+    let compareObjects: { [key in DocId]: SyncItem } = {};
 
     compareObjects = R.indexBy(R.prop('id'), await this.destCollection.findByIds(this._unfilteredItems.map(i => i.id)));
 
@@ -77,7 +77,9 @@ class Synchronizer{
     */
     let stopAdding = false;
 
-    for(let i=0; i<this._unfilteredItems.length; i++){
+    const ignoredCompareObjects: SyncItem[] = [];
+
+    for (let i = 0; i < this._unfilteredItems.length; i++) {
       const item = this._unfilteredItems[i];
       const objectToCompare: SyncItem | undefined = compareObjects[item.id];
 
@@ -87,24 +89,41 @@ class Synchronizer{
       //       (Instead of adding it to the if statement).
       const sameVersion = item.equals(objectToCompare);
 
-      if(sameVersion || ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)){
+      if (sameVersion || ConflictPolicy.shouldIgnoreItem(conflict, this._options.conflictStrategy)) {
         this._ignoredItems.push(item);
+        ignoredCompareObjects.push(objectToCompare);
       }
 
-      if(!sameVersion && ConflictPolicy.shouldSyncItem(conflict, this._options.conflictStrategy, stopAdding)){
+      if (!sameVersion && ConflictPolicy.shouldSyncItem(conflict, this._options.conflictStrategy, stopAdding)) {
         this._itemsToSync.push(item);
       }
 
-      if(!sameVersion && ConflictPolicy.shouldHandleAsConflict(conflict, this._options.conflictStrategy)){
+      if (!sameVersion && ConflictPolicy.shouldHandleAsConflict(conflict, this._options.conflictStrategy)) {
         this._conflictItems.push(item);
       }
 
-      if(ConflictPolicy.shouldStopAdding(conflict, this._options.conflictStrategy)){
+      if (ConflictPolicy.shouldStopAdding(conflict, this._options.conflictStrategy)) {
         stopAdding = true;
       }
     }
 
-    if(ConflictPolicy.shouldSetStatusAsConflict(this._conflictItems.length > 0, this._options.conflictStrategy)){
+    // Add ignored items to be synced, but with a new date. Because what this says is:
+    // I know there is a more recent version, but I choose to keep MY version, but in order
+    // to do that, I will pretend I fetch it, but then modify it again now (that's why it has
+    // the current date).
+    for (let i = 0; i < ignoredCompareObjects.length; i++) {
+      const obj = ignoredCompareObjects[i];
+
+      // NOTE: It seems that it's very important to set a real date of fetch/post, not just copy the last
+      //       date from the fetched/posted item. There are few situations where copying the date would
+      //       result in other slaves not picking up changes.
+      obj.update(obj.document, new Date());
+
+      this._itemsToSync.push(ignoredCompareObjects[i]);
+    }
+
+    //console.log("items to sync", this._itemsToSync)
+    if (ConflictPolicy.shouldSetStatusAsConflict(this._conflictItems.length > 0, this._options.conflictStrategy)) {
       this._syncStatus = SyncStatus.Conflict;
     }
   }
@@ -117,29 +136,29 @@ class Synchronizer{
    * and does not throw any error.
    * This method can only be executed once. In order to sync again, create a new instance.
   */
-  async executeSync(){
-    if(this._alreadyExecuted){
+  async executeSync() {
+    if (this._alreadyExecuted) {
       throw new Error("Cannot execute sync again");
     }
 
     this._alreadyExecuted = true;
 
-    if(!this.areItemsSorted(this._itemsToSync)){
+    if (!this.areItemsSorted(this._itemsToSync)) {
       throw new Error("Items to sync are not ordered correctly (order must be updatedAt ASC)");
     }
 
     await this.syncItems();
   }
 
-  private cleanUp(){
+  private cleanUp() {
     // Free memory after using it.
-    
+
     // TODO: Do this micro optimization.
     // this.destCollection = undefined;
   }
 
   /** Executes a commit. If it does not succeed, status is set to `SyncStatus.UnexpectedError`. */
-  async commit(){
+  async commit() {
     await this.retryUntilSuccess(
       5,
       async () => await this.destCollection.commitSync(this._itemsToSync, this._ignoredItems, this._conflictItems),
@@ -151,7 +170,7 @@ class Synchronizer{
   }
 
   /** Executes a rollback. If it does not succeed, status is set to `SyncStatus.UnexpectedError`. */
-  async rollback(){
+  async rollback() {
     await this.retryUntilSuccess(
       5,
       async () => await this.destCollection.rollbackSync(this._itemsToSync, this._ignoredItems, this._conflictItems),
@@ -166,61 +185,63 @@ class Synchronizer{
    * Retries a function N times until it succeeds. If it doesn't succeed, it sets
    * the status to error.
    */
-  private async retryUntilSuccess(times: number = 1, cb: Function, onSuccess: Function){
+  private async retryUntilSuccess(times: number = 1, cb: Function, onSuccess: Function) {
     let err;
     let result;
-    for(let i=0; i<times; i++){
+    for (let i = 0; i < times; i++) {
       try {
         err = undefined;
         result = await cb();
         break;
-      } catch(e){
+      } catch (e) {
         err = e;
       }
     }
 
     await onSuccess(result);
 
-    if(err){
+    if (err) {
       this._syncStatus = SyncStatus.UnexpectedError;
     }
   }
 
-  private async syncItems(): Promise<void>{
-    if(this._syncStatus == SyncStatus.Conflict) return;
+  private async syncItems(): Promise<void> {
+    if (this._syncStatus == SyncStatus.Conflict) return;
 
     let syncedItems: SyncItem[] = [];
 
+    // NOTE: This status can never be observed, because it will change right away.
     this._syncStatus = SyncStatus.Running;
 
-    if(this._itemsToSync.length == 0)
+    if (this._itemsToSync.length == 0)
       this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;
-    else if(this._itemsToSync.length > 0){
+    else if (this._itemsToSync.length > 0) {
       try {
         syncedItems = await this.destCollection.syncBatch(this._itemsToSync);
         this._syncStatus = SyncStatus.PreCommitDataTransmittedSuccessfully;
-      } catch(e){
+      } catch (e) {
         this._syncStatus = SyncStatus.UnexpectedError;
         return;
       }
     }
 
-    // Get the highest updateAt, from the synced items + the ignored items.
-    this.lastSyncedItem = this.itemHighestUpdatedAt(syncedItems.concat(this._ignoredItems));
+    // Get the highest updateAt, from the synced items + the ignored items (ignored items
+    // are also synced, because they need to update its date).
+    this.lastSyncedItem = this.itemHighestUpdatedAt(syncedItems);
   }
 
-  abort(){
+  abort() {
     this._syncStatus = SyncStatus.Aborted;
   }
 
-  private itemHighestUpdatedAt(items: SyncItem[]): SyncItem | undefined{
-    if(items.length == 0) return undefined;
+  private itemHighestUpdatedAt(items: SyncItem[]): SyncItem | undefined {
+    if (items.length == 0) return undefined;
 
     let highest = items[0];
 
-    for(let i=1; i<items.length; i++){
+    for (let i = 1; i < items.length; i++) {
       const curr = items[i];
-      if(highest.updatedAt < curr.updatedAt){
+      if (highest.updatedAt < curr.updatedAt) {
         highest = curr;
       }
     }
@@ -229,13 +250,13 @@ class Synchronizer{
   }
 
   private areItemsSorted(items: SyncItem[]): boolean {
-    if(items.length < 2) return true;
+    if (items.length < 2) return true;
 
-    for(let i=1; i<items.length; i++){
+    for (let i = 1; i < items.length; i++) {
       const prev = items[i - 1];
       const curr = items[i];
 
-      if(prev.updatedAt > curr.updatedAt) return false;
+      if (prev.updatedAt > curr.updatedAt) return false;
     }
 
     return true;
