@@ -10,17 +10,11 @@ import BasicSyncMetadata from "../src/example-implementations/BasicSyncMetadata"
 import CollectionSyncMetadata from "../src/CollectionSyncMetadata";
 import SyncStatus from "../src/types/SyncStatus";
 
-const dateDayString = (date: Date) => date.toISOString().split("T")[0];
-
-// A string like "2021/09/10" to use to create dates.
-// This is necessary because dates are updated using local system date, which is unfortunate, because
-// that makes it harder to test.
-const todayString: string = dateDayString(new Date());
-
-/** Compare two dates, and determine if it's today (omits hour, minute, second, etc). */
-function isToday(date?: Date): boolean {
+async function isHighestDateInCollection(date: Date | undefined, collection: SynchronizableCollection): Promise<boolean> {
   if (!date) return false;
-  return dateDayString(date) == todayString;
+  const highestUpdatedAt = (await collection.latestUpdatedItem())?.updatedAt;
+  const result = highestUpdatedAt == date;
+  return result;
 }
 
 /**
@@ -293,7 +287,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       // so it may get strange. But anyway, this behavior seems to be correct, because it happens when
       // using ignore (it re-writes the same data using NOW as date, so that it can then be pushed, because
       // it's necessary to make the item have a newer date, so that it's elegible for pushing).
-      expect(isToday((await slave.findByIds(["marisel34"]))[0]?.updatedAt)).toBe(true);
+      expect(await isHighestDateInCollection((await slave.findByIds(["marisel34"]))[0]?.updatedAt, slave)).toBe(true);
     });
 
     test(".needsSync (post)", async () => {
@@ -357,20 +351,56 @@ const executeAllTests = (options: TestExecutionArgument) => {
     });
 
     test(".sync (post) with conflict (use ignore strategy)", async () => {
+      // NOTE: This example is not how a full-sync would be executed in real life.
+      //       It's first necessary to perform a fetch, otherwise data would get corrupted.
+      //       In this case, by not making a fetch first, the object in the slave gets "shadowed" by
+      //       the one in the master, which gets the mockedSyncDate date after sync (post) is done.
+      const mockedSyncDate: Date = new Date("2030/06/01");
       await slave.syncBatch([makeItem(123, "2025/01/01")]);
       await master.syncBatch([makeItem(123, "2026/01/01")]);
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }), mockedSyncDate);
+      expect((await slave.findByIds([123]))[0].updatedAt).toEqual(new Date("2025/01/01"));
+      expect((await master.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
+
+      // NOTE: latest post date is updated even if one is ignored. The ignored object is re-sent but with
+      //       current date (sync date, the date when the sync operation is executed, unrelated to any date in the DB.)
+      expect(await slave.syncMetadata.getLastPostAt()).toEqual(mockedSyncDate);
+    });
+
+    test(".sync (post) with conflict (use ignore strategy), with fetch first (full-sync)", async () => {
+      // NOTE: Same example as previous one, but without shadowing the item.
+      const mockedSyncDate: Date = new Date("2030/06/01");
+      await slave.syncBatch([makeItem(123, "2025/01/01")]);
+      await master.syncBatch([makeItem(123, "2026/01/01")]);
+      await slave.sync(SyncOperation.Fetch, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }), mockedSyncDate);
+      expect(slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect((await slave.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
+      expect((await master.findByIds([123]))[0].updatedAt).toEqual(new Date("2026/01/01"));
+
+      // TODO: Should be .Force
+      //       When using .Ignore, other tests (apart from this one) also fail, which means some strange bug going on.
+      //       But it also fails with Array collection it seems (not when using NeDB). Probably just an interface implementation
+      //       bug (NeDB still works properly, so that's great). But still fix please.
+      //       Not that after fixing that bug (i.e. breaking other tests, this should be changed to .Force,
+      //       because we are doing a full-sync here.)
       await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
-      // NOTE: latest post date is updated even if one is ignored.
-      expect(isToday(await slave.syncMetadata.getLastPostAt())).toBe(true);
+      expect(slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
+      expect((await slave.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
+      expect((await master.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
+
+      expect(await slave.syncMetadata.getLastPostAt()).toEqual(mockedSyncDate);
+      expect(await slave.syncMetadata.getLastFetchAt()).toEqual(mockedSyncDate);
     });
 
     test(".sync (post) with conflict (use ignore strategy) 2", async () => {
+      const mockedSyncDate: Date = new Date("2030/01/01");
+
       await slave.syncBatch([
         makeItem(123, "2025/01/01"),
         makeItem(124, "2028/01/01")
       ]);
       await master.syncBatch([makeItem(123, "2026/01/01")]);
-      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }), mockedSyncDate);
       expect((await slave.findByIds([123]))[0]?.updatedAt).toEqual(new Date("2025/01/01"));
 
       expect(slave.lastSynchronizer?.syncStatus).toBe(SyncStatus.PreCommitDataTransmittedSuccessfully);
@@ -382,7 +412,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       // TODO: Should it force master to rewrite its data?
       // Updated to "today" (becomes the most recent update in the collection, because it's basically a conflict resolution)
       // Similar to what happens when a conflict fix in Git creates a brand new commit.
-      expect(isToday((await master.findByIds([123]))[0]?.updatedAt)).toBe(true);
+      expect(await isHighestDateInCollection((await master.findByIds([123]))[0]?.updatedAt, master)).toBe(true);
 
       // Doesn't need to update any date, because it was not a conflict, so just COPY the date from the posted item.
       expect((await master.findByIds([124]))[0]?.updatedAt).toEqual(new Date("2028/01/01"));
@@ -394,7 +424,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       //       manually pick which data to keep (local, or server) and then set the flags accordingly
       //       so that one is ignored, and the other one is forced. It's similar to a git merge
       //       and then manually fixing conflicts.
-      expect(await slave.syncMetadata.getLastPostAt()).toEqual(new Date("2028/01/01"));
+      expect(await slave.syncMetadata.getLastPostAt()).toEqual(mockedSyncDate);
 
       expect((await slave.latestUpdatedItem())?.updatedAt).toEqual(new Date("2028/01/01"));
     });

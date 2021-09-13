@@ -11,7 +11,7 @@ class Synchronizer {
   private lastSyncedItem?: SyncItem;
 
   // Currently not used, so this can wait for a future version.
-  private _startDate?: Date;
+  private _startDate: Date;
   private _endDate?: Date;
 
   private _syncedItems: SyncItem[] = [];
@@ -65,11 +65,17 @@ class Synchronizer {
     return this._syncedItems;
   }
 
-  constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions) {
+  constructor(items: SyncItem[], lastSyncAt: Date | undefined, destCollection: Collection, options: SyncOptions, startDate?: Date) {
     this.destCollection = destCollection;
     this._options = options;
     this._unfilteredItems = items;
     this._lastSyncAt = lastSyncAt;
+
+    if (startDate) {
+      this._startDate = startDate;
+    } else {
+      this._startDate = new Date();
+    }
   }
 
   async prepareSyncData(): Promise<void> {
@@ -90,6 +96,10 @@ class Synchronizer {
       const objectToCompare: SyncItem | undefined = compareObjects[item.id];
 
       const conflict = ConflictPolicy.isConflict(this._lastSyncAt, item, objectToCompare);
+
+      // TODO: Try to refactor the way ignored items (which should change their name, it should be more like
+      //       "there are conflicts, but KEEP this data and update their date to make them the newest"),
+      //       and put them in different arrays for syncing. This refactor is mostly to make a user-friendly API.
 
       // TODO: This should be part of the inputs of "shouldSyncItem", and perhaps other methods too.
       //       (Instead of adding it to the if statement).
@@ -129,7 +139,7 @@ class Synchronizer {
       // NOTE: It seems that it's very important to set a real date of fetch/post, not just copy the last
       //       date from the fetched/posted item. There are few situations where copying the date would
       //       result in other slaves not picking up changes.
-      obj.update(obj.document, new Date()); // TODO: Unfortunate that it's local time. Make it configurable from outside the class (it will help testing).
+      obj.update(obj.document, this._startDate);
 
       this._itemsToSync.push(ignoredCompareObjects[i]);
     }

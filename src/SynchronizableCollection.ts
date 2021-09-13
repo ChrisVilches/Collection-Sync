@@ -144,7 +144,7 @@ abstract class SynchronizableCollection implements Collection {
    * Wraps sync operation so that `cleanUp` and `rollback` are conveniently placed at the end
    * and always executed.
   */
-  async sync(syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions): Promise<Synchronizer> {
+  async sync(syncOperation: SyncOperation, limit: number, options: SyncOptions = this.defaultSyncOptions, date?: Date): Promise<Synchronizer> {
     if (limit < 1) {
       throw new Error("Limit must be a positive integer");
     }
@@ -152,7 +152,7 @@ abstract class SynchronizableCollection implements Collection {
     const items: SyncItem[] = await this.itemsToSync(syncOperation, limit);
     const lastSyncAt = await this.syncMetadata.getLastAt(syncOperation);
     const destCollection: Collection = (syncOperation == SyncOperation.Fetch ? this : this._parent) as Collection;
-    const synchronizer = new Synchronizer(items, lastSyncAt, destCollection, options);
+    const synchronizer = new Synchronizer(items, lastSyncAt, destCollection, options, date);
     this.synchronizers.push(synchronizer);
 
     try {
