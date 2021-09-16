@@ -45,12 +45,14 @@ function makeItem(id: DocId, date: string): PersonItem {
   return new PersonItem(id, { name: "a", age: 20 }, new Date(date));
 }
 
-const personItems: PersonItem[] = [
+// Warning: These arrays must be returned from a function.
+//          If they are defined as normal arrays, they will be modified permanently by tests (static data).
+const personItems = () => [
   makeItem("chris123", "2020/01/01"),
   makeItem("marisel34", "2020/06/01")
 ];
 
-const manyItems = [
+const manyItems = () => [
   makeItem(1, "2020/01/01"),
   makeItem(2, "2015/06/01"),
   makeItem(3, "2018/06/01"),
@@ -85,8 +87,8 @@ const executeAllTests = (options: TestExecutionArgument) => {
     await master.initialize();
     await collectionManyItems.initialize();
 
-    await master.syncBatch(personItems);
-    await collectionManyItems.syncBatch(manyItems);
+    await master.syncBatch(personItems());
+    await collectionManyItems.syncBatch(manyItems());
   };
 
   describe("SynchronizableArray", () => {
@@ -115,7 +117,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
     test(".needsSync (fetch)", async () => {
       await slave.sync(SyncOperation.Fetch, 100);
-      expect((await slave.findByIds([personItems[1].id]))[0]?.id).toBe(personItems[1].id);
+      expect((await slave.findByIds([personItems()[1].id]))[0]?.id).toBe(personItems()[1].id);
       expect(await slave.needsSync(SyncOperation.Fetch)).toBeFalsy();
     });
 
@@ -377,13 +379,7 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect((await slave.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
       expect((await master.findByIds([123]))[0].updatedAt).toEqual(new Date("2026/01/01"));
 
-      // TODO: Should be .Force
-      //       When using .Ignore, other tests (apart from this one) also fail, which means some strange bug going on.
-      //       But it also fails with Array collection it seems (not when using NeDB). Probably just an interface implementation
-      //       bug (NeDB still works properly, so that's great). But still fix please.
-      //       Not that after fixing that bug (i.e. breaking other tests, this should be changed to .Force,
-      //       because we are doing a full-sync here.)
-      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Ignore }));
+      await slave.sync(SyncOperation.Post, 100, makeOpts({ conflictStrategy: SyncConflictStrategy.Force }));
       expect(slave.lastSynchronizer?.syncStatus).toEqual(SyncStatus.PreCommitDataTransmittedSuccessfully);
       expect((await slave.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
       expect((await master.findByIds([123]))[0].updatedAt).toEqual(mockedSyncDate);
@@ -439,7 +435,6 @@ const executeAllTests = (options: TestExecutionArgument) => {
       expect(itemIds.map(i => i.id)).toEqual([4, 3, 7]);
     });
 
-    // TODO: Add more similar examples. Add examples with multiple slaves, etc.
     // NOTE: Really verbose, but keep it because it helped me fix a massive bug.
     test("real life bi-directional example", async () => {
       expect(await master.countAll()).toEqual(2);
@@ -555,12 +550,12 @@ const executeAllTests = (options: TestExecutionArgument) => {
 
 const collectionInitFns = [
   (s?: CollectionSyncMetadata) => new SynchronizableArray(s),
-  //(s?: CollectionSyncMetadata) => new SynchronizableNeDB(s),
+  (s?: CollectionSyncMetadata) => new SynchronizableNeDB(s),
 ];
 
 const syncMetadataInitFns: (() => CollectionSyncMetadata)[] = [
   () => new BasicSyncMetadata(new Date("2020/02/01"), new Date("2001/02/01")),
-  //() => new JsonFileSyncMetadata("./tmp/", new Date("2020/02/01"), new Date("2001/02/01"))
+  () => new JsonFileSyncMetadata("./tmp/", new Date("2020/02/01"), new Date("2001/02/01"))
 ];
 
 // Test all combinations of class implementations.

@@ -1,5 +1,7 @@
 collection-sync / [Exports](modules.md)
 
+[![npm version](https://badge.fury.io/js/collection-sync.svg)](https://badge.fury.io/js/collection-sync)
+
 # Collection Sync
 
 Javascript Library for bi-directional database synchronization between multiple devices or servers. Customizable and completely database agnostic.

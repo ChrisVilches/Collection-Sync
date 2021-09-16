@@ -17,7 +17,7 @@
 
 #### Defined in
 
-[types/SyncTypes.ts:26](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/types/SyncTypes.ts#L26)
+[types/SyncTypes.ts:28](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/types/SyncTypes.ts#L28)
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 #### Defined in
 
-[types/SyncTypes.ts:27](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/types/SyncTypes.ts#L27)
+[types/SyncTypes.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/types/SyncTypes.ts#L29)

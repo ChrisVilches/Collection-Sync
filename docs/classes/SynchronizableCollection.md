@@ -58,7 +58,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L24)
+[SynchronizableCollection.ts:24](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L24)
 
 ## Properties
 
@@ -68,7 +68,7 @@
 
 #### Defined in
 
-[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L20)
+[SynchronizableCollection.ts:20](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L20)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L13)
+[SynchronizableCollection.ts:13](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L13)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L22)
+[SynchronizableCollection.ts:22](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L22)
 
 ___
 
@@ -100,7 +100,7 @@ Store history of sync operations.
 
 #### Defined in
 
-[SynchronizableCollection.ts:18](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L18)
+[SynchronizableCollection.ts:18](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L18)
 
 ## Accessors
 
@@ -114,7 +114,7 @@ Store history of sync operations.
 
 #### Defined in
 
-[SynchronizableCollection.ts:74](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L74)
+[SynchronizableCollection.ts:77](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L77)
 
 ___
 
@@ -128,7 +128,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:70](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L70)
+[SynchronizableCollection.ts:73](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L73)
 
 • `set` **parent**(`p`): `void`
 
@@ -144,7 +144,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:66](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L66)
+[SynchronizableCollection.ts:69](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L69)
 
 ## Methods
 
@@ -167,7 +167,7 @@ It's recommended to implement cleaning logic if necessary.
 
 #### Defined in
 
-[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L63)
+[SynchronizableCollection.ts:63](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L63)
 
 ___
 
@@ -199,7 +199,7 @@ pushed by multiple users synchronizing at the same time.
 
 #### Defined in
 
-[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L52)
+[SynchronizableCollection.ts:52](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L52)
 
 ___
 
@@ -219,7 +219,7 @@ Gets the number of items in the collection.
 
 #### Defined in
 
-[SynchronizableCollection.ts:28](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L28)
+[SynchronizableCollection.ts:28](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L28)
 
 ___
 
@@ -245,7 +245,7 @@ Returns a list of records using an ID list as search query.
 
 #### Defined in
 
-[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L29)
+[SynchronizableCollection.ts:29](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L29)
 
 ___
 
@@ -265,7 +265,7 @@ Executes async logic to initialize collection or datastore (open file, create da
 
 #### Defined in
 
-[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L33)
+[SynchronizableCollection.ts:33](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L33)
 
 ___
 
@@ -294,7 +294,7 @@ will be executed).
 
 #### Defined in
 
-[SynchronizableCollection.ts:31](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L31)
+[SynchronizableCollection.ts:31](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L31)
 
 ___
 
@@ -315,7 +315,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:94](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L94)
+[SynchronizableCollection.ts:115](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L115)
 
 ___
 
@@ -336,7 +336,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:98](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L98)
+[SynchronizableCollection.ts:119](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L119)
 
 ___
 
@@ -359,7 +359,7 @@ Gets list of items that can be synced (to either fetch or post).
 
 #### Defined in
 
-[SynchronizableCollection.ts:103](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L103)
+[SynchronizableCollection.ts:124](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L124)
 
 ___
 
@@ -379,13 +379,30 @@ Gets the highest `updateAt` date in the collection.
 
 #### Defined in
 
-[SynchronizableCollection.ts:32](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L32)
+[SynchronizableCollection.ts:32](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L32)
 
 ___
 
 ### needsSync
 
 ▸ **needsSync**(`syncOperation`): `Promise`<`boolean`\>
+
+Determines if synchronization is needed. This only performs a simple date check
+to see if the source collection has at least one item that's newer than the last
+sync date. This doesn't determine if items are actually different from those in the
+destination collection. This means that even if this method returns `true`, there may
+be occasions where no item is actually synced because they were identical. Checking which
+items have actually changed is more expensive, and usually it's recommended to be done
+while executing the actual sync, and in small batches (the last sync date is updated after
+every batch, meaning that after enough sync operations, this method will begin to return `false`).
+
+One example of this can be seen when the local collection posts an item to the parent collection,
+updating the last post date, but not the fetch date. Then, when checking if fetch is necessary,
+it will return `true` because it just posted a new object and only based on dates, it will determine
+that the item has not been fetched yet. However when executing the fetch operation, all items
+will be ignored because that new item from the server collection is the same as the one in the
+local collection (since it was the local collection which posted it in the first place). This happens
+because last fetch and post dates are updated individually.
 
 #### Parameters
 
@@ -399,7 +416,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:79](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L79)
+[SynchronizableCollection.ts:100](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L100)
 
 ___
 
@@ -422,7 +439,7 @@ be aborted. It will only commit the data if the return value is `true`.
 
 #### Defined in
 
-[SynchronizableCollection.ts:48](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L48)
+[SynchronizableCollection.ts:48](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L48)
 
 ___
 
@@ -446,7 +463,7 @@ the return value is `true`.
 
 #### Defined in
 
-[SynchronizableCollection.ts:40](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L40)
+[SynchronizableCollection.ts:40](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L40)
 
 ___
 
@@ -476,13 +493,13 @@ pushed by multiple users synchronizing at the same time.
 
 #### Defined in
 
-[SynchronizableCollection.ts:56](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L56)
+[SynchronizableCollection.ts:56](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L56)
 
 ___
 
 ### sync
 
-▸ **sync**(`syncOperation`, `limit`, `options?`): `Promise`<`Synchronizer`\>
+▸ **sync**(`syncOperation`, `limit`, `options?`, `date?`): `Promise`<`Synchronizer`\>
 
 Wraps sync operation so that `cleanUp` and `rollback` are conveniently placed at the end
 and always executed.
@@ -494,6 +511,7 @@ and always executed.
 | `syncOperation` | [`SyncOperation`](../enums/SyncOperation.md) |
 | `limit` | `number` |
 | `options` | `SyncOptions` |
+| `date?` | `Date` |
 
 #### Returns
 
@@ -501,13 +519,13 @@ and always executed.
 
 #### Defined in
 
-[SynchronizableCollection.ts:126](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L126)
+[SynchronizableCollection.ts:147](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L147)
 
 ___
 
 ### syncAux
 
-▸ **syncAux**(`synchronizer`, `syncOperation`, `limit`, `options?`): `Promise`<`void`\>
+▸ `Private` **syncAux**(`synchronizer`, `syncOperation`): `Promise`<`void`\>
 
 #### Parameters
 
@@ -515,8 +533,6 @@ ___
 | :------ | :------ |
 | `synchronizer` | `Synchronizer` |
 | `syncOperation` | [`SyncOperation`](../enums/SyncOperation.md) |
-| `limit` | `number` |
-| `options` | `SyncOptions` |
 
 #### Returns
 
@@ -524,7 +540,7 @@ ___
 
 #### Defined in
 
-[SynchronizableCollection.ts:150](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L150)
+[SynchronizableCollection.ts:173](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L173)
 
 ___
 
@@ -551,4 +567,4 @@ Order of document processing doesn't need to be in any particular order.
 
 #### Defined in
 
-[SynchronizableCollection.ts:30](https://github.com/ChrisVilches/Collection-Sync/blob/fde950f/src/SynchronizableCollection.ts#L30)
+[SynchronizableCollection.ts:30](https://github.com/ChrisVilches/Collection-Sync/blob/0dbe0dc/src/SynchronizableCollection.ts#L30)
