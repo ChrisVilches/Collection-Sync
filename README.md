@@ -218,6 +218,8 @@ When a conflict is encountered, a suggestion is to ask the user to manually sele
 
 Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to `SynchronizableCollection` or `Collection` have been proposed.
 
+It's possible to implement this logic in the `preExecuteSync` (acquire lock, and return `false` if it failed) and `cleanUp` (release lock) hooks.
+
 ### Using it with Vanilla Javascript
 
 Use with vanilla Javascript is not tested. It may not be convenient for development. Typescript is recommended.
