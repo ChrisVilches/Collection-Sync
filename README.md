@@ -216,7 +216,7 @@ When a conflict is encountered, a suggestion is to ask the user to manually sele
 
 ### Locking mechanism
 
-Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to 'SynchronizableCollection' or `Collection` have been proposed.
+Locking mechanism (to prevent multiple devices from synchronizing at the same time) must be implemented by the user. The addition of `acquireLock` and `releaseLock` abstract methods to `SynchronizableCollection` or `Collection` have been proposed.
 
 ### Using it with Vanilla Javascript
 
